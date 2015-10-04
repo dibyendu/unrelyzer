@@ -1,4 +1,5 @@
 # Exclude files
+parser
 *.tab.*
 lex.yy.*
 *.dot
