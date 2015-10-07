@@ -1,13 +1,8 @@
-all: tokenize parse build
-
-tokenize:
-	flex tokenizer.l
-
-parse:
-	bison -d parser.y
-
-build:
-	gcc lex.yy.c parser.c parser.tab.c -o parser
-
+all:
+	cd src && make all && cd ..
+	mkdir -p build
+	cp src/parser src/input build
 clean:
-	rm parser.tab.* *.dot *.png lex.yy.c parser
+	cd src && make clean && cd ..
+	rm -rf build
+
