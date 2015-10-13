@@ -1,6 +1,8 @@
 # Exclude files
-parser
-*.tab.*
-lex.yy.*
-*.dot
-*.png
+src/Makefile
+src/parser
+src/*.tab.*
+src/lex.yy.*
+src/*.dot
+src/*.png
+build/

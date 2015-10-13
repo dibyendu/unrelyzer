@@ -3,7 +3,6 @@
 #include <string.h>
 #include "parser.tab.h"
 
-FILE *fp;
 int line_number = 0, i;
 const char *keywords[] = {"int", "if", "else", "while"};
 const int keyword_tokens[] = {INT, IF, ELSE, WHILE},

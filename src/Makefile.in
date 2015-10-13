@@ -7,7 +7,7 @@ parse:
 	@BISON@ -d parser.y
 
 build:
-	gcc lex.yy.c parser.c parser.tab.c -o parser
+	gcc lex.yy.c dataflow.c parser.c parser.tab.c -o parser
 
 clean:
 	rm -f parser.tab.* *.dot *.png lex.yy.c parser

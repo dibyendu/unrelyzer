@@ -45,7 +45,7 @@ stmt      :   type
                             gen_ast("true\nblock", TRUEBLOCK, ast_stack_top - stmt_count - 2, 0);
                           }
               elsestmt    { gen_parse_tree("stmt", NULL, 0, 6);
-                            unsigned short cond_block_offset = ast_stack[ast_stack_top - 1]->type == TRUEBLOCK ? 2 : 3,
+                            short cond_block_offset = ast_stack[ast_stack_top - 1]->type == TRUEBLOCK ? 2 : 3,
                                            stmt_line_number = ast_stack[ast_stack_top - cond_block_offset]->line_number;
                             ast_stack[ast_stack_top - cond_block_offset]->line_number = 0;
                             ast_stack[ast_stack_top - cond_block_offset]->type = LOGOPBLOCK;
@@ -61,7 +61,7 @@ stmt      :   type
                             unsigned int stmt_count = ast_stack_top - 1;
                             while (ast_stack[stmt_count--]->type != CONDITION);
                             gen_ast("true\nblock", TRUEBLOCK, ast_stack_top - stmt_count - 2, 0);
-                            unsigned short stmt_line_number = ast_stack[ast_stack_top - 2]->line_number;
+                            short stmt_line_number = ast_stack[ast_stack_top - 2]->line_number;
                             ast_stack[ast_stack_top - 2]->line_number = 0;
                             ast_stack[ast_stack_top - 2]->type = LOGOPBLOCK;
                             gen_ast("while", CONTROLBLOCK, 2, stmt_line_number);
@@ -172,11 +172,15 @@ int main(int argc, char **argv) {
   cfg_node_bucket = (CFG_NODE **) calloc(max_line_number + 1, sizeof(CFG_NODE *));
   cfg = (CFG_NODE *) calloc(1, sizeof(CFG_NODE));
   gen_cfg(cfg, ast);
-  free(cfg_node_bucket);
 
   //pretty_print_parse_tree(parse_tree);
   generate_dot_file("parse-tree.dot", "Parse_Tree", PARSE_TREE);
   generate_dot_file("ast.dot", "Abstract_Syntax_Tree", AST);
   generate_dot_file("cfg.dot", "Control_Flow_Graph", CFG);
+  
+  gen_dataflow_eqn();
+  free(cfg_node_bucket);
+
+  print_dataflow_eqn();
   return 0;
 }
