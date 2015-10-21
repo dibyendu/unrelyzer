@@ -3550,7 +3550,7 @@ $as_echo "$as_me: building bison from source ..." >&6;}
   BISON="$BISON_BINARY/bin/bison"
 fi
 
-ac_config_files="$ac_config_files src/Makefile"
+ac_config_files="$ac_config_files src/dataflow/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4294,7 +4294,7 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
-    "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
+    "src/dataflow/Makefile") CONFIG_FILES="$CONFIG_FILES src/dataflow/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

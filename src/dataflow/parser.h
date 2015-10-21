@@ -58,12 +58,11 @@ SymbolTable *symbol_table;
 ParseTree *parse_tree, **parse_stack;
 Ast *ast, **ast_stack, ***data_flow_matrix;
 Cfg **cfg_node_bucket, *cfg;
-
-//void parse(const char *);
-//void generate_dot_file(const char *, GraphT);
-//void build_parse_tree(const char *, const char *, int, int);
-//void pretty_print_parse_tree(ParseTree *);
-//void build_abstract_syntax_tree(const char *, AstType, int, int);
-//void build_control_flow_graph(Cfg *, Ast *);
 Ast *invert_expression(Ast *);
 char *expression_to_string(Ast *, char *);
+
+void parse(const char *);
+void build_control_flow_graph(Cfg *, Ast *);
+void generate_dot_file(const char *, GraphT);
+void generate_dataflow_equations(void);
+void print_dataflow_equations(void);
