@@ -1,8 +1,9 @@
 # Exclude files
-src/Makefile
-src/parser
-src/*.tab.*
-src/lex.yy.*
+src/dataflow/Makefile
+src/dataflow/*.a
+src/dataflow/*.o
+src/dataflow/*.tab.*
+src/dataflow/lex.yy.*
 src/*.dot
 src/*.png
-build/
+src/main
