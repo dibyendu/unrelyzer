@@ -45,6 +45,6 @@ else
   BISON="$BISON_BINARY/bin/bison"
 fi
 
-AC_OUTPUT([src/Makefile])
+AC_OUTPUT([src/dataflow/Makefile])
 
 rm config.*

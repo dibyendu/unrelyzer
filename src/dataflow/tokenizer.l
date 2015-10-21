@@ -1,12 +1,12 @@
 %{
 #include <stdio.h>
 #include <string.h>
-#include "parser.tab.h"
+#include "grammar.tab.h"
 
 int line_number = 0, i;
 const char *keywords[] = {"int", "if", "else", "while"};
 const int keyword_tokens[] = {INT, IF, ELSE, WHILE},
-          no_of_keywords = sizeof(keywords)/sizeof(char *);
+          n_keywords = sizeof(keywords)/sizeof(char *);
 %}
 
 %s SIGNED_NUMBER_STATE
@@ -21,10 +21,10 @@ IDENTIFIER                          [_a-zA-Z][_a-zA-Z0-9]*
 {INTEGER}                           { BEGIN(INITIAL); return NUM; }
 {IDENTIFIER}                        {
                                       BEGIN(INITIAL);
-                                      for(i = 0; i < no_of_keywords; i++)
+                                      for(i = 0; i < n_keywords; i++)
                                         if(!strcmp(keywords[i], yytext))
                                           break;
-                                      if (i < no_of_keywords)
+                                      if (i < n_keywords)
                                         return keyword_tokens[i];
                                       else
                                         return ID;
