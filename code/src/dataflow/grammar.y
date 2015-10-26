@@ -29,14 +29,14 @@ compstmt  :   stmt
               compstmt    { build_parse_tree("compstmt", NULL, 0, 2); }
             | stmt        { build_parse_tree("compstmt", NULL, 0, 1); };
 stmt      :   type
-              ID          { store_symbols(yytext);
+              ID          { get_symbol_table_index(yytext);
                             build_parse_tree("ID", yytext, 1, 0);
                           }
               idlist
               SEMICOLON   { build_parse_tree("SEMICOLON", ";", 1, 0);
                             build_parse_tree("stmt", NULL, 0, 4);
                           }
-            | ID          { store_symbols(yytext);
+            | ID          { get_symbol_table_index(yytext);
                             build_parse_tree("ID", yytext, 1, 0);
                             build_abstract_syntax_tree(yytext, IDBLOCK, 0, 0);
                           }
@@ -84,7 +84,7 @@ idlist    :   /* empty */ { build_parse_tree("EPSILON", "e", 1, 0);
                             build_parse_tree("idlist", NULL, 0, 1);
                           }
             | COMMA       { build_parse_tree("COMMA", ",", 1, 0); }
-              ID          { store_symbols(yytext);
+              ID          { get_symbol_table_index(yytext);
                             build_parse_tree("ID", yytext, 1, 0);
                           }
               idlist      { build_parse_tree("idlist", NULL, 0, 3); };
@@ -173,17 +173,18 @@ factor    :   POPEN       { build_parse_tree("POPEN", "(", 1, 0); }
                             build_parse_tree("factor", NULL, 0, 3);
                           }
             | UNIARITHOP  { build_parse_tree("UNIARITHOP", yytext, 1, 0);
+                            build_abstract_syntax_tree("0", NUMBLOCK, 0, 0);
                             build_abstract_syntax_tree(yytext, ARITHOPBLOCK, 0, 0);
                           }
               factor      { build_parse_tree("factor", NULL, 0, 2);
                             Ast *tmp = ast_stack[ast_stack_top - 2];
                             ast_stack[ast_stack_top - 2] = ast_stack[ast_stack_top - 1];
                             ast_stack_top -= 1;
-                            build_abstract_syntax_tree(tmp->token, tmp->type, 1, 0);
+                            build_abstract_syntax_tree(tmp->token, tmp->type, 2, 0);
                             free(tmp->token);
                             free(tmp);
                           }
-            | ID          { store_symbols(yytext);
+            | ID          { get_symbol_table_index(yytext);
                             build_parse_tree("ID", yytext, 1, 0);
                             build_parse_tree("factor", NULL, 0, 1);
                             build_abstract_syntax_tree(yytext, IDBLOCK, 0, 0);

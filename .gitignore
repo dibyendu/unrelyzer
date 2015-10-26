@@ -1,9 +1,9 @@
 # Exclude files
-src/dataflow/Makefile
-src/dataflow/*.a
-src/dataflow/*.o
-src/dataflow/*.tab.*
-src/dataflow/lex.yy.*
-src/*.dot
-src/*.png
-src/main
+code/src/dataflow/*.a
+code/src/dataflow/*.o
+code/src/dataflow/*.tab.*
+code/src/dataflow/lex.yy.*
+code/src/*.dot
+code/src/*.png
+code/src/main
+reference*.pdf

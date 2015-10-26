@@ -1,11 +1,11 @@
 #include "parser.h"
 
 void generate_dataflow_equations() { 
-  data_flow_matrix = (Ast ***) calloc((max_line_number + 1), sizeof(Ast **));
+  data_flow_matrix = (Ast ***) calloc((N_lines + 1), sizeof(Ast **));
   int i;
-  for (i = 0; i < max_line_number + 1; ++i)
+  for (i = 0; i <= N_lines; ++i)
     if (cfg_node_bucket[i])
-      data_flow_matrix[i] = (Ast **) calloc((max_line_number + 1), sizeof(Ast *));
+      data_flow_matrix[i] = (Ast **) calloc((N_lines + 1), sizeof(Ast *));
 
   void handle_meet_node(Cfg *node, int index) {
     if (node->in1->program_point != MEET_NODE) {
@@ -27,7 +27,7 @@ void generate_dataflow_equations() {
     return;
   }
 
-  for (i = 0; i < max_line_number + 1; ++i) {
+  for (i = 0; i <= N_lines; ++i) {
     if (cfg_node_bucket[i]) {
       if (cfg_node_bucket[i]->in1) {
         if (cfg_node_bucket[i]->in1->program_point == MEET_NODE)
@@ -51,7 +51,7 @@ void generate_dataflow_equations() {
       }
     }
   }
-  for (i = 0; i < max_line_number + 1; ++i)
+  for (i = 0; i <= N_lines; ++i)
     if (cfg_node_bucket[i])
       free(cfg_node_bucket[i]);
   free(cfg_node_bucket);
@@ -145,11 +145,11 @@ char *expression_to_string(Ast *node, char *stmt) {
 void print_dataflow_equations() {
   int i, j, first;
   char stmt[1024] = {0};
-  for (i = 1; i < max_line_number + 1; i++) {
+  for (i = 1; i <= N_lines; i++) {
     if (data_flow_matrix[i]) {
       printf("g_%hd = ", i);
       first = 1;
-      for (j = 1; j < max_line_number + 1; j++) {
+      for (j = 1; j <= N_lines; j++) {
         if (data_flow_matrix[i][j]) {
           stmt[0] = 0;
           printf("%ssp(g_%hd, %s)", first ? " " : " U ", j, expression_to_string(data_flow_matrix[i][j], stmt));
@@ -161,7 +161,7 @@ void print_dataflow_equations() {
   }
   first = 1;
   printf("g_exit = ");
-  for (j = 1; j < max_line_number + 1; j++) {
+  for (j = 1; j <= N_lines; j++) {
     if (data_flow_matrix[0][j]) {
       stmt[0] = 0;
       printf("%ssp(g%hd, %s)", first ? " " : " U ", j, expression_to_string(data_flow_matrix[0][j], stmt));

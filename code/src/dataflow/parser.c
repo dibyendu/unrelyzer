@@ -23,9 +23,9 @@ void parse(const char *file) {
   symbol_table = (SymbolTable *) calloc(SYMBOL_TABLE_SIZE, sizeof(SymbolTable));
   parse_stack = (ParseTree **) calloc(STACK_SIZE, sizeof(ParseTree *));
   ast_stack = (Ast **) calloc(STACK_SIZE, sizeof(Ast *));
-  max_line_number = parse_stack_top = parse_tree_node_id = ast_stack_top = ast_node_id = 0;
+  N_lines = parse_stack_top = parse_tree_node_id = ast_stack_top = ast_node_id = 0;
   yyparse();
-  cfg_node_bucket = (Cfg **) calloc(max_line_number + 1, sizeof(Cfg *));
+  cfg_node_bucket = (Cfg **) calloc(N_lines + 1, sizeof(Cfg *));
   cfg = (Cfg *) calloc(1, sizeof(Cfg));
   free(parse_stack);
   free(ast_stack);
@@ -33,25 +33,44 @@ void parse(const char *file) {
   return;
 }
 
-unsigned int hash(const char *str) {
-  unsigned long c, hash = 5381, base = 1000;
+int get_symbol_table_index(const char *token) {
+  unsigned int hash(const char *str) {
+    unsigned long c, hash = 5381, base = 1000;
+    while (c = *str++) hash = ((hash << 5) + hash) + c;
+    c = 1;
+    while (c <= hash) c *= base;
+    c /= base;
+    return ((int) (hash / c) * (int) (hash % base)) % SYMBOL_TABLE_SIZE;
+  }
 
-  while (c = *str++)
-    hash = ((hash << 5) + hash) + c;
-  c = 1;
-  while (c <= hash)
-    c *= base;
-  c /= base;
-
-  return ((int) (hash / c) * (int) (hash % base)) % SYMBOL_TABLE_SIZE;
-}
-
-void store_symbols(const char *token) {
   int index = hash(token);
-  while (symbol_table[index].id)
+  while (symbol_table[index].id) {
+    if (!strcmp(symbol_table[index].id, token))
+      return index;
     index = (index + 1) % SYMBOL_TABLE_SIZE;
+  }
   symbol_table[index].id = (char *) calloc(strlen(token) + 1, sizeof(char));
   strcpy(symbol_table[index].id, token);
+  return index;
+}
+
+void free_parse_tree(ParseTree *head) {
+  void free_node(ParseTree *node) {
+    free(node->token);
+    free(node->printable);
+    free(node);
+  }
+
+  if (!head->number_of_children) {
+    free_node(head);
+    return;
+  }
+  int n = head->number_of_children;
+  while (n) {
+    free_parse_tree(head->children[head->number_of_children - n]);
+    n -= 1;
+  }
+  free_node(head);
 }
 
 /*
@@ -97,8 +116,8 @@ void build_abstract_syntax_tree(const char *token, AstType type, int number_of_c
   tmp->children = (Ast **) calloc(number_of_children, sizeof(Ast *));
   tmp->visualization_id = ast_node_id++;
   tmp->line_number = line;
-  if (line > max_line_number)
-    max_line_number = line;
+  if (line > N_lines)
+    N_lines = line;
   int i = number_of_children - 1;
   while (number_of_children--)
     tmp->children[i--] = ast_stack[--ast_stack_top];
@@ -189,45 +208,6 @@ void build_control_flow_graph(Cfg *cfg, Ast *ast) {
     cfg = cfg->out_true;
     i += 1;
   }
-  return;
-}
-
-/*
- * Simple DFS of the parse tree
- */
-void pretty_print_parse_tree(ParseTree *head) {
-  static int level = 0, space = 0, leave_space = 0;
-  int i;
-  if (leave_space) {
-    leave_space = 0;
-    i = space + (level - 1) * 5;
-    while (i--)
-      putchar(' ');
-    printf(" --> ");
-  }
-  printf("%s", head->token);
-  if (head->is_terminal) {
-    leave_space = 1;
-    int i = sizeof(printable_tokens)/sizeof(char *);
-    while (i--) {
-      if (!strcmp(head->token, printable_tokens[i])) {
-        printf(" (%s)", head->printable);
-        break;
-      }
-    }
-    putchar('\n');
-  } else {
-    printf(" --> ");
-    space += strlen(head->token);
-  }
-  i = 0;
-  while (i < head->number_of_children) {
-    level += 1;
-    pretty_print_parse_tree(head->children[i++]);
-  }
-  level -= 1;
-  if (!head->is_terminal)
-    space -= strlen(head->token);
   return;
 }
 

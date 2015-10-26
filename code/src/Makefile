@@ -4,7 +4,7 @@ biuldLib:
 	cd dataflow && make && cd ..
 
 build:
-	gcc main.c -o main -Ldataflow -ldf
+	gcc concrete.c main.c -o main -Ldataflow -ldf
 
 clean:
 	cd dataflow && make clean && cd ..

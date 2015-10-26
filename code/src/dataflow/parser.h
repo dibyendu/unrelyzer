@@ -30,6 +30,7 @@ typedef enum CfgNodeT {
 
 typedef struct SymbolTableT {
   char *id;
+  void **concrete;
 } SymbolTable;
 
 typedef struct ParseTreeT {
@@ -43,6 +44,7 @@ typedef struct AstT {
   AstType type;
   int number_of_children, line_number, visualization_id;
   struct AstT **children;
+  void *value;
 } Ast;
 
 typedef struct CfgT {
@@ -53,16 +55,19 @@ typedef struct CfgT {
 
 char *yytext;
 FILE *yyin;
-int line_number, max_line_number, parse_stack_top, ast_stack_top, parse_tree_node_id, ast_node_id, meet_node_visualization_id;
-SymbolTable *symbol_table;
+int line_number, parse_stack_top, ast_stack_top, parse_tree_node_id, ast_node_id, meet_node_visualization_id;
 ParseTree *parse_tree, **parse_stack;
-Ast *ast, **ast_stack, ***data_flow_matrix;
+Ast *ast, **ast_stack;
 Cfg **cfg_node_bucket, *cfg;
 Ast *invert_expression(Ast *);
 char *expression_to_string(Ast *, char *);
 
+SymbolTable *symbol_table;
+Ast ***data_flow_matrix;
+int N_lines;
 void parse(const char *);
 void build_control_flow_graph(Cfg *, Ast *);
 void generate_dot_file(const char *, GraphT);
 void generate_dataflow_equations(void);
 void print_dataflow_equations(void);
+void free_parse_tree(ParseTree *);
