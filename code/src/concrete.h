@@ -1,21 +1,20 @@
+#include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "hardware_specification.h"
 
-#define MININT 0
-#define MAXINT 3
+#define MININT -4
+#define MAXINT  4
+
+typedef struct ConcreteValueSetT {
+  int value;
+  struct ConcreteValueSetT *left, *right; 
+  int _height;
+} ConcreteValueSet;
 
 typedef struct ConcreteStateT {
-  int value;
+  ConcreteValueSet *value_set;
+  short number_of_values;
   double probability;
+  struct ConcreteStateT **component_states;
 } ConcreteState;
-
-typedef struct ConcreteStateSetT {
-  ConcreteState state;
-  struct ConcreteStateSetT *left, *right;
-  int _height;
-} ConcreteStateSet;
-
-ConcreteStateSet *free_concrete_set(ConcreteStateSet *);
-ConcreteStateSet *update_concrete_set(ConcreteStateSet *, int, double, short);
-
-void avl_to_dot_file(const char *, ConcreteStateSet *);

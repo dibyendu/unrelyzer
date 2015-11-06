@@ -6,14 +6,17 @@
 int line_number = 0, i;
 const char *keywords[] = {"int", "if", "else", "while"};
 const int keyword_tokens[] = {INT, IF, ELSE, WHILE},
-          n_keywords = sizeof(keywords)/sizeof(char *);
+          N_keywords = sizeof(keywords)/sizeof(char *);
 %}
 
 %s SIGNED_NUMBER_STATE
+%s SINGLE_LINE_COMMENT
 INTEGER                             ([1-9]+[0-9]*|0)
 IDENTIFIER                          [_a-zA-Z][_a-zA-Z0-9]*
 
 %%
+\/\/                                { BEGIN(SINGLE_LINE_COMMENT); }
+<SINGLE_LINE_COMMENT>.*             { BEGIN(INITIAL); }
 \n                                  { ++line_number; }
 [ \t]                               ;
 ;                                   { return SEMICOLON; }
@@ -21,10 +24,10 @@ IDENTIFIER                          [_a-zA-Z][_a-zA-Z0-9]*
 {INTEGER}                           { BEGIN(INITIAL); return NUM; }
 {IDENTIFIER}                        {
                                       BEGIN(INITIAL);
-                                      for(i = 0; i < n_keywords; i++)
+                                      for(i = 0; i < N_keywords; i++)
                                         if(!strcmp(keywords[i], yytext))
                                           break;
-                                      if (i < n_keywords)
+                                      if (i < N_keywords)
                                         return keyword_tokens[i];
                                       else
                                         return ID;
@@ -40,5 +43,5 @@ IDENTIFIER                          [_a-zA-Z][_a-zA-Z0-9]*
 ")"                                 { BEGIN(INITIAL); return PCLOSE; }
 "{"                                 { return BOPEN; }
 "}"                                 { return BCLOSE; }
-.                                   { printf("Found unrecognized character \"%s\" at line # %d\n", yytext, line_number); }
+.                                   { printf("Found unrecognized character \"%s\" at line #%d\n", yytext, line_number); }
 %%

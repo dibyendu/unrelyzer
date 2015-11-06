@@ -1,4 +1,5 @@
 # Exclude files
+code/src/valgrind/
 code/src/dataflow/*.a
 code/src/dataflow/*.o
 code/src/dataflow/*.tab.*
