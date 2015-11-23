@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include "hardware_specification.h"
 
-#define MININT -4
-#define MAXINT  4
+#define MININT  -2
+#define MAXINT   2
 
 typedef struct ConcreteValueSetT {
   int value;
@@ -18,3 +18,5 @@ typedef struct ConcreteStateT {
   double probability;
   struct ConcreteStateT **component_states;
 } ConcreteState;
+ 
+bool *empty_state_status, **data_flow_graph;
