@@ -248,36 +248,23 @@ Where, \underline{$Rel_{prev}(x)$} is the probability with which variable $x$ ho
 
 We are interested in static analysis of these type of probabilistic programs by employing the theory of abstraction using Galois Connection (GC).
 
-\section{The Probabilistic Concrete Domain, $L$}
+\section{The Probabilistic Concrete Domain, $\mathcal{L}:(L,\sqsubseteq_L)$}
 
-From the above arguments we can infer that in the concrete domain each possible program state is associated with some probability. We represent program state as a tuple of value and its associated probability. Set of all possible program states is thus represented by
+From the above arguments we can infer that in the concrete domain each possible program state is associated with some probability. We represent program state as a tuple of sets values and its associated probability. For program with a single integer variable, the concrete domain is $\quad L\subseteq2^{\mathbb{Z}}\times\mathbb{R}\quad$ and
 
 \centerline{
-  $\mathbb{Z}_p=\Big\{\langle a,p_a\rangle\quad\big|\quad a\in\mathbb{Z}, p_a\in\mathbb{R}, \mathtt{MININT}\leq a\leq\mathtt{MAXINT}, 0\leq p_a\leq1\Big\}$
+  \hl{$L=\left\{\left(S,p\right)\ \middle|\ S\in2^{\mathbb{Z}}\bigwedge p\in\mathbb{R}\bigwedge \forall s\in S, \mathtt{MININT}\leq s\leq\mathtt{MAXINT}\bigwedge 0\leq p\leq1\right\}$}
 }
 
-Throughout our discussion we assume that our program variables take values between $\mathbf{\mathtt{MININT}}$ and $\mathbf{\mathtt{MAXINT}}$ (including both). $\langle a_i,p_{a_i}\rangle$ denotes that at a particular program point $v_i$, variable $x_i$ takes the value $a_i$ with probability $p_{a_i}$. For $1\leq i\leq n$, We define two utility functions as follows :
-\begin{align}
-  \mathbf{val}\bigg(\Big(\langle a_1,p_{a_1}\rangle,\langle a_2,p_{a_2}\rangle\cdots\langle a_n,p_{a_n}\rangle\Big),i\bigg)=a_i\label{eq:val}\\
-  \mathbf{prob}\bigg(\Big(\langle a_1,p_{a_1}\rangle,\langle a_2,p_{a_2}\rangle\cdots\langle a_n,p_{a_n}\rangle\Big),i\bigg)=p_{a_i}\label{eq:prob}\\
-\end{align}
-
-In this case, the concrete domain $L$ is a subset of the power set of $\mathbb{Z}_p$. For program with a single integer variable, the concrete domain is \hl{$L=\Big\{S\in2^{^{\mathbb{Z}_p}}\ \Large:\ \normalsize S\ \text{is finite}\bigwedge\big|\big\{\mathbf{val}(t)\ |\ \forall t\in S\big\}\big|=\big|S\big|\Big\}$}\footnote{This way we ensure that values in each element of $L$ are unique. For example, $\Big\{\langle a,p_a\rangle,\ \langle b,p_b\rangle\Big\}\in L$ but $\Big\{\langle a,p_a\rangle,\ \langle b,p_{b_1}\rangle,\ \langle b,p_{b_2}\rangle\Big\}\notin L$}, set of all feasible sets of program states. \hl{In general, for program with $n$ integer variables, this concrete domain will be : $\displaystyle\bigwedge_i \forall S_i\in L,\quad\Big\{S_1\times S_2\times\cdots\times S_n\Big\}=L_n.$}
+Throughout our discussion we assume that our program variables take values between $\mathbf{\mathtt{MININT}}$ and $\mathbf{\mathtt{MAXINT}}$ (including both). $\langle S_i,p_i\rangle$ denotes that at a particular program point, say $v_i$, variable $x_i$ (say) takes its values from set $S_i$ with probability $p_i$. In general, for program with $n$ integer variables, this concrete domain will be $L^n$
 
 We define a partial order $\sqsubseteq_L$ on $L$ as follows :
 
-\centerline{\hl{$\forall A,B\in L\qquad A\sqsubseteq_L B$}}
-iff
-\begin{enumerate}[i)]
-\item \hl{$\Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in B\Big\}$}
-\item \hl{$\forall t_a\in A,\ \forall t_b\in B\quad\bigg(\Big(\mathbf{val}(t_a)=\mathbf{val}(t_b)\Big)\Rightarrow\Big(\mathbf{prob}(t_a)\geq\mathbf{prob}(t_b)\Big)\bigg)$}
-\end{enumerate}
-\hl{all the above conditions hold simultaneously.} As an example,\\
+\centerline{\hl{$\forall \langle S_1,p_1\rangle, \langle S_2,p_2\rangle\in L\qquad \langle S_1,p_1\rangle\sqsubseteq_L \langle S_2,p_2\rangle\qquad\iff \qquad S_1\subseteq S_2\quad\bigwedge\quad p_1\geq p_2$}}
+
+As an example,\\
 \centerline{
-  $\Big\{\langle a_1,p_{a_1}\rangle,\ \langle a_2,p_{a_2}\rangle\ \cdots\ \langle a_n,p_{a_n}\rangle\Big\}\sqsubseteq_L\Big\{\langle a_1,p'_{a_1}\rangle,\ \langle a_2,p'_{a_2}\rangle\ \cdots\ \langle a_m,p'_{a_m}\rangle\Big\}\qquad$ iff
-}
-\centerline{
-  $n\leq m, \text{so that\ }\big\{a_1,a_2\ \cdots\ a_n\big\}\subseteq\big\{a_1,a_2\ \cdots\ a_m\big\}\qquad$and$\qquad\displaystyle\bigwedge_n \big(p_{a_i}\geq p'_{a_i}\big)$
+  $\langle\{a_1, a_2,\cdots a_n\},p_1\rangle\sqsubseteq_L\langle\{a_1, a_2,\cdots a_m\},p_2\rangle\qquad$ iff $\qquad n\leq m, \text{so that\ }\{a_1,a_2\cdots a_n\}\subseteq\{a_1,a_2\cdots a_m\}\qquad$and$\qquad p_1\geq p_2$
 }
 
 $(L,\ \sqsubseteq_L)$ is a \textbf{poset}, proof of which is given in \ref{app:concrete_partial}. To show this poset to be a \textbf{lattice}, we need to show that for any two elements in $L$ there exist a unique infimum and a unique supremum. More formally
@@ -287,24 +274,22 @@ $(L,\ \sqsubseteq_L)$ is a \textbf{poset}, proof of which is given in \ref{app:c
   \exists L_{glb}\in\Big\{l\in L\ \ \big|\ \ (l\sqsubseteq_L x)\land(l\sqsubseteq_L y)\Big\}\ &s.t\ \bigg(\forall z\ \ \Big(z\in\Big\{l\in L\ \ \big|\ \ (l\sqsubseteq_L x)\land(l\sqsubseteq_L y)\Big\} \Rightarrow z\sqsubseteq_L L_{glb}\Big)\bigg)\Bigg)
 \end{align*}
 where $L_{lub}$ is the least upper bound and $L_{glb}$ is the greatest lower bound of $x$ and $y$ in $L$. We now define the least upper bound or $l.u.b$, $\displaystyle\bigsqcup_L$ and the greatest lower bound or $g.l.b$, $\displaystyle\bigsqcap^L$ for any two elements $A$ and $B$ of $L$ as follows.
-
 \begin{align}
-    A\ \bigsqcup_L\ B\quad=\quad&\Big\{t_a\ \big|\  t_a\in A\bigwedge \mathbf{val}(t_a)\notin \big\{\mathbf{val}(t_b)\ |\ t_b\in B\big\}\Big\}\ \bigcup\ \Big\{t_b\ \big|\  t_b\in B\bigwedge \mathbf{val}(t_b)\notin \big\{\mathbf{val}(t_a)\ |\ t_a\in A\big\}\Big\}\ \bigcup&\nonumber\\
-    &\qquad\qquad\qquad\qquad\Big\{\big\langle\mathbf{val}(t_a),\mathbf{min}\big(\mathbf{prob}(t_a),\mathbf{prob}(t_b)\big)\big\rangle\ \big|\  t_a\in A, t_b\in B\bigwedge \mathbf{val}(t_a)=\mathbf{val}(t_b)\Big\}&\label{eq:lub_L}\\
-    A\ \bigsqcap^L\ B\quad=\quad&\Big\{\big\langle\mathbf{val}(t_a),\mathbf{max}\big(\mathbf{prob}(t_a),\mathbf{prob}(t_b)\big)\big\rangle\ \big|\  t_a\in A, t_b\in B\bigwedge \mathbf{val}(t_a)=\mathbf{val}(t_b)\Big\}&\label{eq:glb_L}
+    \langle S_1,p_1\rangle\ \bigsqcup_L\ \langle S_2,p_2\rangle\quad=\quad&\left\langle S_1\bigcup S_2, \textbf{min}(p_1,p_2)\right\rangle&\label{eq:lub_L}\\
+    \langle S_1,p_1\rangle\ \bigsqcap^L\ \langle S_2,p_2\rangle\quad=\quad&\left\langle S_1\bigcap S_2, \textbf{max}(p_1,p_2)\right\rangle&\label{eq:glb_L}
 \end{align}
 
 Soundness of these definitions is proved in \ref{app:concrete_ub}. Greatest and least element of this lattice $(L,\ \sqsubseteq_L)$ are $\top_L$ and $\bot_L$ respectively, where
 
-$\top_L=\big\{\langle a,0\rangle\ \big|\ a\in[\mathtt{MININT},\mathtt{MAXINT}]\big\}=\big\{\langle\mathtt{MININT},0\rangle\ \cdots\ \langle -1,0\rangle,\langle 0,0\rangle,\langle 1,0\rangle\ \cdots\ \langle\mathtt{MAXINT},0\rangle\big\}$
+$\top_L=\langle\{a\in\mathbb{Z}\ :\ \mathrm{MININT}\leq a\leq\mathrm{MAXINT}\}, 0\rangle$
 
-$\bot_L=\big\{\ \big\}$
+$\bot_L=\langle\{\ \}, 1\rangle$
 
 The \textbf{Hasse Diagram} of lattice $(L,\sqsubseteq_L)$ can be found in \ref{app:concrete_hasse}. $\forall S\subseteq L,\quad S$ has a unique $l.u.b$ and $g.l.b$ in $L$. Hence $L$ is a complete lattice.
 
-Next, we shall define a function on $L_n$ called the \textit{strongest post-condition function}\cite{lara13}.
+Next, we shall define a function on $L^n$ called the \textit{strongest post-condition function}\cite{lara13}.
 
-Consider $P$ to be a predicate defined over program variables. Alternatively, we can also think of $P$ as a set of possible program states which satisfy the relation $P$. For example, $p=(\langle5,p_1\rangle)\equiv[x=5]$ is a program state ($p_1$ is a place-holder here) and $P:[x>10]$ is a predicate such that $p\notin P$. Similarly, consider a program with three integer variables $x,\ y$ and $z$ such that $p=\big(\langle5,p_1\rangle,\langle10,p_2\rangle,\langle10,p_3\rangle\big)\equiv[x=5,\ y=10,\ z=10]$ and $p'=\big(\langle15,p'_1\rangle,\langle0,p'_2\rangle,\langle1,p'_3\rangle\big)\equiv[x=15,\ y=0,\ z=1]$ are two program states. Given a predicate $P:[x+y\geq z]$, we may observe that both $p,p'\in P$. Let $P$ denote a (pre-condition) predicate which is true before the execution of some program statement $S$. Strongest post condition (sp) is a function which takes as argument a program statement $S$ (or a sequence of statements) and a predicate $P$ and returns the strongest predicate that holds after executing $S$ from any program state which satisfies $P$. It is strongest in the sense that for any other such predicate $Q$ which holds for any state resulting from execution of $S$ given $P$, we shall always have $sp(P,S)\Rightarrow Q$ (implies $Q$) or in a set theoretic notation $sp(P,S)\subseteq Q$. As example, we consider next arithmetic expressions (with assignment) and logical expressions as examples of $S$.
+Consider $P$ to be a predicate defined over program variables. Alternatively, we can also think of $P$ as a set of possible program states which satisfy the relation $P$. For example, $p=\langle\{5\},p_1\rangle\equiv[x=5]$ is a program state ($p_1$ is a place-holder here) and $P:[x>10]$ is a predicate such that $p\notin P$. Similarly, consider a program with three integer variables $x,\ y$ and $z$ such that $p=\langle\{5,10,10\},p_2\rangle\equiv[x=5,\ y=10,\ z=10]$ and $p'=\langle\{15,0,1\},p_3\rangle\equiv[x=15,\ y=0,\ z=1]$ are two program states ($p_2,p_3$ are place-holders here). Given a predicate $P:[x+y\geq z]$, we may observe that both $p,p'\in P$. Let $P$ denote a (pre-condition) predicate which is true before the execution of some program statement $S$. Strongest post condition (sp) is a function which takes as argument a program statement $S$ (or a sequence of statements) and a predicate $P$ and returns the strongest predicate that holds after executing $S$ from any program state which satisfies $P$. It is strongest in the sense that for any other such predicate $Q$ which holds for any state resulting from execution of $S$ given $P$, we shall always have $sp(P,S)\Rightarrow Q$ (implies $Q$) or in a set theoretic notation $sp(P,S)\subseteq Q$. As example, we consider next arithmetic expressions (with assignment) and logical expressions as examples of $S$.
 
 We assume that there are $n$ variables in the program, namely, $x_1,x_2\cdots x_n$.
 
@@ -658,35 +643,28 @@ We prove that $\sqsubseteq_L$ is a partial order relation as follows.
 
 \begin{description}
 \item[Reflexivity :] \hfill \\
-	Reflexivity follows trivially from the definition of $\sqsubseteq_L\qquad\therefore\forall A\in L\quad A\sqsubseteq_L A$.
+	Reflexivity follows trivially from the definition of $\sqsubseteq_L\qquad\therefore\forall \langle S,p\rangle\in L\qquad\langle S,p\rangle\sqsubseteq_L\langle S,p\rangle$.
 \item[Transitivity :] \hfill
 \begin{alignat}{2}
-    A\sqsubseteq_L B &\qquad\bigwedge\qquad B\sqsubseteq_L C\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\text{(Given)}\nonumber\\
-    \Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in B\Big\} &\qquad\bigwedge\qquad \Big\{\mathbf{val}(t)\ \big|\ \forall t\in B\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in C\Big\}\label{eq:cpo1}
+    \langle S_1,p_1\rangle\sqsubseteq_L\langle S_2,p_2\rangle &\qquad\bigwedge\qquad \langle S_2,p_2\rangle\sqsubseteq_L\langle S_3,p_3\rangle\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\text{(Given)}\nonumber\\
+    S_1\subseteq S_2 &\qquad\bigwedge\qquad S_2\subseteq S_3\label{eq:cpo1}\\
+    p_1\geq p_2 &\qquad\bigwedge\qquad p_2\geq p_3\label{eq:cpo2}
 \end{alignat}
-\begin{align}
-	\forall t_a\in A,\forall t_b\in B\quad\bigg(\Big(\mathbf{val}(t_a)=\mathbf{val}(t_b)\Big)\Rightarrow\Big(\mathbf{prob}(t_a)\geq\mathbf{prob}(t_b)\Big)\bigg)\quad\bigwedge\nonumber\\
-	\forall t_b\in B,\forall t_c\in C\quad\bigg(\Big(\mathbf{val}(t_b)=\mathbf{val}(t_c)\Big)\Rightarrow\Big(\mathbf{prob}(t_b)\geq\mathbf{prob}(t_c)\Big)\bigg)\qquad\ \ &\label{eq:cpo2}
-\end{align}
+
+From \ref{eq:cpo1} we get $S_1\subseteq S_3$ and from \ref{eq:cpo2} we get
+$p_1\geq p_3$.
 	
-	From \ref{eq:cpo1} we get $\Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in C\Big\}$ and from \ref{eq:cpo2} we get\\
-\noindent$\forall t_a\in A,\forall t_c\in C\quad\bigg(\Big(\mathbf{val}(t_a)=\mathbf{val}(t_c)\Big)\Rightarrow\Big(\mathbf{prob}(t_a)\geq\mathbf{prob}(t_c)\Big)\bigg)$.
-	
-	$\therefore A\sqsubseteq_L C$
+	$\therefore \langle S_1,p_1\rangle\sqsubseteq_L\langle S_3,p_3\rangle$
 \item[Anti-Symmetricity :] \hfill
 \begin{alignat}{2}
-    A\sqsubseteq_L B &\qquad\bigwedge\qquad B\sqsubseteq_L A\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\text{(Given)}\nonumber\\
-    \Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in B\Big\} &\qquad\bigwedge\qquad \Big\{\mathbf{val}(t)\ \big|\ \forall t\in B\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\Big\}\label{eq:cpo3}
+    \langle S_1,p_1\rangle\sqsubseteq_L\langle S_2,p_2\rangle &\qquad\bigwedge\qquad \langle S_2,p_2\rangle\sqsubseteq_L\langle S_1,p_1\rangle\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\text{(Given)}\nonumber\\
+    S_1\subseteq S_2 &\qquad\bigwedge\qquad S_2\subseteq S_1\label{eq:cpo3}\\
+    p_1\geq p_2 &\qquad\bigwedge\qquad p_2\geq p_1\label{eq:cpo4}
 \end{alignat}
-\begin{align}
-	\forall t_a\in A,\forall t_b\in B\quad\bigg(\Big(\mathbf{val}(t_a)=\mathbf{val}(t_b)\Big)\Rightarrow\Big(\mathbf{prob}(t_a)\geq\mathbf{prob}(t_b)\Big)\bigg)\quad\bigwedge\nonumber\\
-	\forall t_b\in B,\forall t_a\in A\quad\bigg(\Big(\mathbf{val}(t_b)=\mathbf{val}(t_a)\Big)\Rightarrow\Big(\mathbf{prob}(t_b)\geq\mathbf{prob}(t_a)\Big)\bigg)\qquad\ \ &\label{eq:cpo4}
-\end{align}
 
-	From \ref{eq:cpo3} we get $\Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\Big\}=\Big\{\mathbf{val}(t)\ \big|\ \forall t\in B\Big\}$ and from \ref{eq:cpo4} we get\\
-\noindent$\forall t_a\in A,\forall t_b\in B\quad\bigg(\Big(\mathbf{val}(t_a)=\mathbf{val}(t_b)\Big)\Rightarrow\Big(\mathbf{prob}(t_a)=\mathbf{prob}(t_b)\Big)\bigg)$.
+From \ref{eq:cpo3} we get $S_1=S_2$ and from \ref{eq:cpo4} we get $p_1=p_2$.
 	
-	$\therefore A=B$
+	$\therefore \langle S_1,p_1\rangle=\langle S_2,p_2\rangle$
 \end{description}
 
 
@@ -700,43 +678,35 @@ We prove that $\sqsubseteq_L$ is a partial order relation as follows.
 \section{\\Soundness of the $l.u.b \displaystyle\bigsqcup_L$ and $g.l.b \displaystyle\bigsqcap^L$ operators in $L$}
 \label{app:concrete_ub}
 
-Let, $A$ and $B$ are two elements in $L$. From definition \ref{eq:lub_L} we get the least upper bound $U$ of $A$ and $B$ as
-
+Let, $\langle S_1,p_1\rangle$ and $\langle S_2,p_2\rangle$ are two elements in $L$. From definition \ref{eq:lub_L} we get the least upper bound $\langle S_u,p_u\rangle$ of $\langle S_1,p_1\rangle$ and $\langle S_2,p_2\rangle$ as
 \begin{align}
-U=A\bigsqcup_L B=&\Big\{t_a\ \big|\  t_a\in A\bigwedge \mathbf{val}(t_a)\notin \big\{\mathbf{val}(t_b)\ |\ t_b\in B\big\}\Big\}\ \bigcup\ \Big\{t_b\ \big|\  t_b\in B\bigwedge \mathbf{val}(t_b)\notin \big\{\mathbf{val}(t_a)\ |\ t_a\in A\big\}\Big\}\ \bigcup&\nonumber\\
-    &\qquad\qquad\qquad\qquad\Big\{\big\langle\mathbf{val}(t_a),\mathbf{min}\big(\mathbf{prob}(t_a),\mathbf{prob}(t_b)\big)\big\rangle\ \big|\  t_a\in A, t_b\in B\bigwedge \mathbf{val}(t_a)=\mathbf{val}(t_b)\Big\}\label{eq:ub_L1}&
+\langle S_u,p_u\rangle=\langle S_1,p_1\rangle\bigsqcup_L\langle S_2,p_2\rangle=&\left\langle S_1\bigcup S_2,\textbf{min}(p_1,p_2)\right\rangle\label{eq:ub_L1}&
 \end{align}
 
-Now, $C$ be an upper bound of both $A$ and $B$.
+Now, $\langle S_c,p_c\rangle$ be an upper bound of both $\langle S_1,p_1\rangle$ and $\langle S_2,p_2\rangle$.
 
-$\therefore A\sqsubseteq_L C\qquad and\qquad B\sqsubseteq_L C$
+$\therefore \langle S_1,p_1\rangle\sqsubseteq_L\langle S_c,p_c\rangle\qquad and\qquad \langle S_2,p_2\rangle\sqsubseteq_L \langle S_c,p_c\rangle$
 
 Using our definition of $\sqsubseteq_L$ we get :
 \begin{align}
-&\Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in C\Big\}&\label{eq:ub_L2}\\
-&\Big\{\mathbf{val}(t)\ \big|\ \forall t\in B\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in C\Big\}&\label{eq:ub_L3}\\
-&\forall t_a\in A,\ \forall t_c\in C\quad\bigg(\Big(\mathbf{val}(t_a)=\mathbf{val}(t_c)\Big)\Rightarrow\Big(\mathbf{prob}(t_a)\geq\mathbf{prob}(t_c)\Big)\bigg)&\label{eq:ub_L4}\\
-&\forall t_b\in B,\ \forall t_c\in C\quad\bigg(\Big(\mathbf{val}(t_b)=\mathbf{val}(t_c)\Big)\Rightarrow\Big(\mathbf{prob}(t_b)\geq\mathbf{prob}(t_c)\Big)\bigg)&\label{eq:ub_L5}
+&S_1\subseteq S_c&\label{eq:ub_L2}\\
+&S_2\subseteq S_c&\label{eq:ub_L3}\\
+&p_1\geq p_c&\label{eq:ub_L4}\\
+&p_2\geq p_c&\label{eq:ub_L5}
 \end{align}
-
-We have to show that $U\sqsubseteq_L C$. From \ref{eq:ub_L1} it's obvious that
+We have to show that $\langle S_u,p_u\rangle\sqsubseteq_L \langle S_c,p_c\rangle$. From \ref{eq:ub_L2} and \ref{eq:ub_L3} it's obvious that
 \begin{align}
-&\forall t\quad\Big(t\in U\Rightarrow t\in A\lor t\in B\Big)\nonumber\\
-\Rightarrow&\quad\forall t\quad\Big(t\in U\Rightarrow t\in A\cup B\Big)&\nonumber\\
-\Rightarrow&\quad U\subseteq A\cup B&\label{eq:ub_L6}
-\end{align}
-Combining \ref{eq:ub_L2} and \ref{eq:ub_L3} we get
-\begin{align}
-&\Big\{\mathbf{val}(t)\ \big|\ \forall t\ \big(t\in A\lor t\in B\big)\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in C\Big\}&\nonumber\\
-&\Rightarrow\Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\cup B\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in C\Big\}&\nonumber\\
-&\Rightarrow\Big\{\mathbf{val}(t)\ \big|\ \forall t\in U\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in C\Big\}&\big[\text{from}\ \ref{eq:ub_L6}\big]\label{eq:ub_L7}
+&S_1\cup S_2\subseteq S_c&\label{eq:ub_L6}
 \end{align}
 Combining \ref{eq:ub_L4} and \ref{eq:ub_L5} we get
 \begin{align}
-&\forall t\in A\cup B,\ \forall t_c\in C\quad\bigg(\Big(\mathbf{val}(t)=\mathbf{val}(t_c)\Big)\Rightarrow\Big(\mathbf{prob}(t)\geq\mathbf{prob}(t_c)\Big)\bigg)&\nonumber\\
-&\forall t_u\in U,\ \forall t_c\in C\quad\bigg(\Big(\mathbf{val}(t_u)=\mathbf{val}(t_c)\Big)\Rightarrow\Big(\mathbf{prob}(t_u)\geq\mathbf{prob}(t_c)\Big)\bigg)&\big[\text{from}\ \ref{eq:ub_L6}\big]\label{eq:ub_L8}
+&\textbf{min}(p_1,p_2)\geq p_c&\label{eq:ub_L7}
 \end{align}
-\ref{eq:ub_L7} and \ref{eq:ub_L8} together proves that $U\sqsubseteq_L C$
+From \ref{eq:ub_L6} and \ref{eq:ub_L7} we get
+\begin{align}
+&\left\langle S_1\bigcup S_2, \textbf{min}(p_1,p_2)\right\rangle\sqsubseteq_L\langle S_c,p_c\rangle&\nonumber\\
+\Rightarrow\quad&\langle S_u,p_u\rangle\sqsubseteq_L\langle S_c,p_c\rangle\nonumber
+\end{align}
 
 We omit the similar proof for greatest lower bound for the sake of brevity.
 

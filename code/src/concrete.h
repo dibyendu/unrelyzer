@@ -1,10 +1,14 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include "hardware_specification.h"
 
-#define MININT  -2
-#define MAXINT   2
+#define MININT  SHRT_MIN
+#define MAXINT  SHRT_MAX
+#define MAX_ITERATION 10
+
+#define DEBUG
 
 typedef struct ConcreteValueSetT {
   int value;
@@ -15,6 +19,7 @@ typedef struct ConcreteValueSetT {
 typedef struct ConcreteStateT {
   ConcreteValueSet *value_set;
   short number_of_values;
+  bool is_top_element;
   double probability;
   struct ConcreteStateT **component_states;
 } ConcreteState;
