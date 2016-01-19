@@ -45,12 +45,19 @@ int get_cfg_node_index(unsigned long value) {
   return index;
 }
 
+IntSet *insert_into_constant_set(IntSet *set, int value) {
+  bool key_exists = false;
+  return avl_tree_insert(set, value, &key_exists);
+}
+
 void parse(const char *file) {
   yyin = fopen(file, "r");
   symbol_table = (SymbolTable *) calloc(SYMBOL_TABLE_SIZE, sizeof(SymbolTable));
+  constant_set = NULL;
   parse_stack = (ParseTree **) calloc(STACK_SIZE, sizeof(ParseTree *));
   ast_stack = (Ast **) calloc(STACK_SIZE, sizeof(Ast *));
   N_variables = N_lines = parse_stack_top = ast_stack_top = 0;
+  is_negative_number = false;
   yyparse();
   symbol_table_indices = (unsigned short *) calloc(N_variables, sizeof(unsigned short));
   int i, j;
@@ -87,6 +94,13 @@ int get_symbol_table_index(const char *token) {
   strcpy(symbol_table[index].id, token);
   N_variables += 1;
   return index;
+}
+
+void free_constant_set(IntSet *set) {
+  if (!set) return;
+  free_constant_set(set->left);
+  free_constant_set(set->right);
+  free(set);
 }
 
 void free_parse_tree(ParseTree *head) {
@@ -291,8 +305,8 @@ void generate_dot_file(const char *file, GraphT type) {
       return;
     cfg_node_hash_table[get_cfg_node_index((unsigned long) head)].is_visited = true;
     char label[1024] = {0}, stmt[1024] = {0};
-    sprintf(stmt, "%d", head->program_point);
-    sprintf(label, "<V<sub>%s</sub>>", head->program_point == MEET_NODE ? "meet" : (head->program_point ? stmt : "exit"));
+    sprintf(stmt, "%d", head->program_point ? head->program_point : N_lines + 1);
+    sprintf(label, "<V<sub>%s</sub>>", head->program_point == MEET_NODE ? "meet" : stmt);
     fprintf(dot_file, "\t%ld [label=%s,  fillcolor=\"#FFEFD5\", shape=\"circle\"];\n", (unsigned long) head, label);
     traverse_cfg(head->out_true);
     traverse_cfg(head->out_false);

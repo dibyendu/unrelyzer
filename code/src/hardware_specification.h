@@ -1,14 +1,21 @@
-#define   PR_RD   0.9999
-#define   PR_WR   0.9999
-#define   PR_ADD  0.9999
-#define   PR_SUB  0.9999
-#define   PR_MUL  0.9999
-#define   PR_DIV  0.9999
-#define   PR_REM  0.9999
-#define   PR_EQ   0.9999
-#define   PR_NEQ  0.9999
-#define   PR_GEQ  0.9999
-#define   PR_LEQ  0.9999
-#define   PR_GT   0.9999
-#define   PR_LT   0.9999
-#define   PR_NEG  0.9999
+#ifndef SPEC_H
+#define SPEC_H
+
+#define   PR_RD   1
+#define   PR_WR   1-10E-8
+
+#define   PR_ADD  1-10E-8
+#define   PR_SUB  1-10E-8
+#define   PR_MUL  1-10E-8
+#define   PR_DIV  1-10E-8
+#define   PR_REM  1-10E-8
+
+#define   PR_EQ   1-10E-8
+#define   PR_NEQ  1-10E-8
+#define   PR_GEQ  1-10E-8
+#define   PR_LEQ  1-10E-8
+#define   PR_GT   1-10E-8
+#define   PR_LT   1-10E-8
+#define   PR_NEG  1-10E-8
+
+#endif

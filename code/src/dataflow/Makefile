@@ -9,9 +9,10 @@ parse:
 build:
 	gcc -c lex.yy.c -o lex.yy.o
 	gcc -c grammar.tab.c -o grammar.tab.o
+	gcc -c avl.c -o avl.o
 	gcc -c parser.c -o parser.o
 	gcc -c dataflow.c -o dataflow.o
-	ar rcs libdf.a grammar.tab.o parser.o dataflow.o lex.yy.o
+	ar rcs libdf.a grammar.tab.o avl.o parser.o dataflow.o lex.yy.o
 
 clean:
 	rm -f grammar.tab.* lex.yy.c *.o *.a

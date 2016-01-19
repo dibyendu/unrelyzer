@@ -67,18 +67,7 @@
     }\ 
   \fi
 }
-\makeatother
-\newlength{\depthofsumsign}
-\setlength{\depthofsumsign}{\depthof{$\sum$}}
-\newcommand{\nsum}[1][1.4]{
-  \mathop{
-    \raisebox{
-      -#1\depthofsumsign+1\depthofsumsign
-    }{
-      \scalebox{#1}{$\displaystyle\sum$}
-    }
-  }
-}
+
 \titleformat*{\section}{\Large}
 \newcommand{\ALPHA}{\large\boldsymbol{\alpha}\normalsize}
 \newcommand{\GAMMA}{\large\boldsymbol{\gamma}\normalsize}
@@ -118,8 +107,8 @@
 
 \begin{frontmatter}
 
-\title{Interval Analysis of Probabilistic Programming Languages --- A first Manuscript\tnoteref{t1}}
-\tnotetext[t1]{A popular static analysis tool for Probabilistic Programming Languages}
+\title{Interval Analysis of Unreliable Programs\tnoteref{t1}}
+\tnotetext[t1]{A popular static analysis tool for probabilistic programs}
 
 \author[iitkgp]{Dibyendu Das\corref{cor1}}
 \ead{dibyendu.das.in@gmail.com}
@@ -129,7 +118,11 @@
 \address[iitkgp]{Department of Computer Science \& Engineering, IIT Kharagpur, West Bengal 721302, India}
 
 \begin{abstract}
+Advancement of chip technology will make futute computer chips more and more fast. But this speed gain doesn't come free of cost. There is going to be a trade-off between speed and efficiency, i.e accuracy of the computation. In order to achieve this extra speed we'll simply have to let our computers make more mistakes in computations.
 
+Our objective here is to statically analyse codes written for these kind of architecture. We have used a C-type language to model the programs written for this architecture. One example of such unreliable programs is RELY\cite{carbin13}. Our static analysis primarily focuses on \textit{Interval Analysis} of this sort of programs.  There are 2 types of failures of the hardware components namely: \emph{permanent failure model} (where the hardware stops on failure) and \emph{transient failure model} (where, on failure, the hardware continues with the next operations). We've only taken transient failure model into consideration. The goal of this analysis is to be able to predict, \textbf{for each program variable at each program point, the interval/range within which it belongs with a particular certainty/confidence}. say for example, the program has $n$ variables namely $x_1,x_2\cdots x_n$. Our analysis will produce output something like $x_i=\langle[a,b],p_{ab}\rangle$ for each $i$, at every program point. This means that variable $x_i$, at that program point lines in the interval $[a,b]$ with probability $p_{ab}$. \emph{Abstract Interpretation} is what we've based our technique on. For that we've come up with two new complete lattices (one concrete and one abstract) for our probabilistic domains and established Galois Connection between them. Right now we're only concerned for program variables storing integer values.
+
+The major applications or this work can be \emph{calculating the success probability of the overall program}, \emph{static branch prediction} for such languages. Other application could be \emph{detection of most reliable path in the program}.
 \end{abstract}
 
 \begin{keyword}
@@ -156,9 +149,19 @@ can often naturally tolerate soft errors.
 
 For handling the future unreliable chips, a research group at MIT's Computer Science and Artificial Intelligence Laboratory (CSAIL) has developed a new programming framework called \textbf{RELY}\cite{carbin13} that enables software developers to specify when errors may be tolerable. The system then calculates the probability that the software will perform as it's intended.
 
-Here, we present an amended form of the popular static analysis tool called \textbf{Range Analysis} or \textbf{Interval Analysis} for RELY like languages. Our model is so modified as to incorporate the unreliabilities occur because of unreliable ALU and memory operations.
+Here, we present a static analysis tool called \textbf{Range Analysis} or \textbf{Interval Analysis} for unreliable programs written for these type of architecture. We call it \textbf{Probabilistic Interval Analysis}. Our model is so modified as to incorporate the unreliabilities occur because of unreliable ALU and memory operations.
 
-Following is an example program snippet and its corresponding \textbf{C}ontrol \textbf{F}low \textbf{G}raph for RELY like programming languages.
+\section{Related Work}
+
+There have already been some work on static analysis of programs with \emph{imprecise probabilistic inputs} \cite{vstte13}, which heavily relies on Dempster-Shafer structures (DSI) or P-boxes. This analyzer assumes each input value to be lying within a \textit{confidence box} $[\underline{P},\overline{P}]$. Based on this assumption it works on to perform the interval analysis of each variable at each program point.
+
+Few more works are there that analyze programs with non-deterministic and probabilistic behavior \cite{monn01}\cite{sumit13}. Those use general abstract interpretation based method for the static analysis of programs using random generators or random inputs and also allow non-deterministic inputs, not necessarily following a random distribution.
+
+Our work is orthogonal to all these as we're concerned with the imprecision seeded into the hardware rather than in input. So, in my case inputs come from reliable sources with fully reliable values.
+
+\section{Unreliable Programs}
+
+Following is an example program snippet and its corresponding \textbf{C}ontrol \textbf{F}low \textbf{G}raph of a program written for an unreliable system in which every operation (ALU or memory) is unrel.
 
 \begin{minipage}[b]{0.40\linewidth}
 \centering
@@ -253,7 +256,7 @@ We are interested in static analysis of these type of probabilistic programs by 
 From the above arguments we can infer that in the concrete domain each possible program state is associated with some probability. We represent program state as a tuple of sets values and its associated probability. For program with a single integer variable, the concrete domain is $\quad L\subseteq2^{\mathbb{Z}}\times\mathbb{R}\quad$ and
 
 \centerline{
-  \hl{$L=\left\{\left(S,p\right)\ \middle|\ S\in2^{\mathbb{Z}}\bigwedge p\in\mathbb{R}\bigwedge \forall s\in S, \mathtt{MININT}\leq s\leq\mathtt{MAXINT}\bigwedge 0\leq p\leq1\right\}$}
+  \hl{$L=\left\{\left(S,p\right)\ \middle|\ S\in2^{\mathbb{Z}}\setminus\phi\bigwedge p\in\mathbb{R}\bigwedge \forall s\in S, \mathtt{MININT}\leq s\leq\mathtt{MAXINT}\bigwedge 0\leq p\leq1\right\}\bigcup\left\{\left(\phi,1\right)\right\}$}
 }
 
 Throughout our discussion we assume that our program variables take values between $\mathbf{\mathtt{MININT}}$ and $\mathbf{\mathtt{MAXINT}}$ (including both). $\langle S_i,p_i\rangle$ denotes that at a particular program point, say $v_i$, variable $x_i$ (say) takes its values from set $S_i$ with probability $p_i$. In general, for program with $n$ integer variables, this concrete domain will be $L^n$
@@ -289,36 +292,16 @@ The \textbf{Hasse Diagram} of lattice $(L,\sqsubseteq_L)$ can be found in \ref{a
 
 Next, we shall define a function on $L^n$ called the \textit{strongest post-condition function}\cite{lara13}.
 
-Consider $P$ to be a predicate defined over program variables. Alternatively, we can also think of $P$ as a set of possible program states which satisfy the relation $P$. For example, $p=\langle\{5\},p_1\rangle\equiv[x=5]$ is a program state ($p_1$ is a place-holder here) and $P:[x>10]$ is a predicate such that $p\notin P$. Similarly, consider a program with three integer variables $x,\ y$ and $z$ such that $p=\langle\{5,10,10\},p_2\rangle\equiv[x=5,\ y=10,\ z=10]$ and $p'=\langle\{15,0,1\},p_3\rangle\equiv[x=15,\ y=0,\ z=1]$ are two program states ($p_2,p_3$ are place-holders here). Given a predicate $P:[x+y\geq z]$, we may observe that both $p,p'\in P$. Let $P$ denote a (pre-condition) predicate which is true before the execution of some program statement $S$. Strongest post condition (sp) is a function which takes as argument a program statement $S$ (or a sequence of statements) and a predicate $P$ and returns the strongest predicate that holds after executing $S$ from any program state which satisfies $P$. It is strongest in the sense that for any other such predicate $Q$ which holds for any state resulting from execution of $S$ given $P$, we shall always have $sp(P,S)\Rightarrow Q$ (implies $Q$) or in a set theoretic notation $sp(P,S)\subseteq Q$. As example, we consider next arithmetic expressions (with assignment) and logical expressions as examples of $S$.
+Consider $P$ to be a predicate defined over program variables. Alternatively, we can also think of $P$ as a set of possible program states which satisfy the relation $P$. For example, $p=\langle\{5\},p_1\rangle\equiv[x=5]$ is a program state ($p_1$ is a place-holder here) and $P:[x>10]$ is a predicate such that $p\notin P$. Similarly, consider a program with three integer variables $x,\ y$ and $z$ such that $p=\langle(\{5\},p_1),(\{10\},p_2),(\{10\},p_3)\rangle\equiv[x=5,\ y=10,\ z=10]$ and $p'=\langle(\{15\},p_1),(\{0\},p_2),(\{1\},p_3)\rangle\equiv[x=15,\ y=0,\ z=1]$ are two program states ($p_1,p_2,p_3$ are place-holders here). Given a predicate $P:[x+y\geq z]$, we may observe that both $p,p'\in P$. Let $P$ denote a (pre-condition) predicate which is true before the execution of some program statement $S$. Strongest post condition (sp) is a function which takes as argument a program statement $S$ (or a sequence of statements) and a predicate $P$ and returns the strongest predicate that holds after executing $S$ from any program state which satisfies $P$. It is strongest in the sense that for any other such predicate $Q$ which holds for any state resulting from execution of $S$ given $P$, we shall always have $sp(P,S)\Rightarrow Q$ (implies $Q$) or in a set theoretic notation $sp(P,S)\subseteq Q$. As example, we consider next arithmetic expressions (with assignment) and logical expressions as examples of $S$.
 
-We assume that there are $n$ variables in the program, namely, $x_1,x_2\cdots x_n$.
-
-\st{for single variable $x$, $P=\{(\langle1,0.9\rangle),(\langle4,0.8\rangle),(\langle-2,0.6\rangle),(\langle5,0.6\rangle)\}$}
-
-\st{for $3$ variables $x_1,x_2,x_3$: $P=\{(\langle1,0.9\rangle,\langle1,0.8\rangle,\langle2,0.9\rangle),(\langle-1,0.8\rangle,\langle2,0.8\rangle,\langle3,0.9\rangle)\}$}
-
+We assume that there are $n$ variables in the program, namely, $x_1,x_2\cdots x_n$. At any program point, a predicate with $n$ variables will be of the form $P:\langle(S_1,p_1),(S_2,p_2),\cdots,(S_n,p_n)\rangle$, s.t at that program point each $x_i$ will have values from the set $S_i$ with probability $p_i$. In the following equations,
 \begin{flalign}
-  &sp\Big(P,\ x_{i_f} =_\bullet x_{i_1} \op[prob]{A}{2} x_{i_2} \op[prob]{A}{3} \cdots \op[prob]{A}{k} x_{i_k}\Big)&&&\nonumber\\
-  &=\left\{\Big(\left\langle a_1,p_1\right\rangle,\left\langle a_2,p_2\right\rangle\cdots\left\langle a_n,p_n\right\rangle\Big)\ \middle|\ \exists t\in P'\left(a_{i_f}=\mathbf{val}(t,i_f)\ \bigwedge\ p_{i_f}=\left(\nsum[2]_{\forall t'\in P',\ \mathbf{val}(t',i_f)=\mathbf{val}(t,i_f)}{\mathbf{prob}(t',i_f)}\right)\ \cdot\right.\right.&&&\nonumber\\
-  &\quad\left(Pr(Wr)+\frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)^l\cdot\prod_{j=2}^k\left(Pr\left(\op[prob]{A}{j}\right)+\frac{1-Pr\left(\op[prob]{A}{j}\right)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\ \bigwedge&&&\nonumber\\
-  &\qquad\qquad\forall j\in\mathbb{N}\setminus\{i_f\}\left(j\leq n\ \Rightarrow a_j=\mathbf{val}(t,j)\ \bigwedge\ p_j=\mathbf{prob}(t,j)\right)\Bigg)\Bigg\}&&&\label{eq:sp_arith}\\
-  &\text{where,}\ l=\Big|\big\{i_k\ |\ x_{i_k}\text{ is a variable}\big\}\Big|\qquad\text{and}&&&\nonumber\\
-  &P'=\left\{\Big(\left\langle a_1,p_1\right\rangle,\left\langle a_2,p_2\right\rangle\cdots\left\langle a_n,p_n\right\rangle\Big)\ \middle|\ \exists t\in P\left(a_{i_f}=\left(v(t,x_{i_1}) \op{A}{2} v(t,x_{i_2}) \op{A}{3} \cdots \op{A}{k} v(t,x_{i_k})\right)\ \bigwedge\ p_{i_f}=\prod_{j=1}^k p(t,x_{i_j})\ \bigwedge\right.\right.&&&\nonumber\\ 
-  &\qquad\qquad\forall j\in\mathbb{N}\setminus\{i_f\}\left(j\leq n\ \Rightarrow a_j=\mathbf{val}(t,j)\ \bigwedge\ p_j=\mathbf{prob}(t,j)\right)\Bigg)\Bigg\}&&&\nonumber\\
-  &sp\left(P,\ \left(x_{i_1} \op[prob]{A}{i_2} x_{i_2} \op[prob]{A}{i_3} \cdots \op[prob]{A}{i_k} x_{i_k}\right)\ \op[prob]{C}{}\ \left(x_{j_1} \op[prob]{A}{j_2} x_{j_2} \op[prob]{A}{j_3} \cdots \op[prob]{A}{j_m} x_{j_m}\right)\right)&&&\nonumber\\
-  &=\left\{\Big(\left\langle a_1,p_1\right\rangle,\left\langle a_2,p_2\right\rangle\cdots\left\langle a_n,p_n\right\rangle\Big)\ \middle|\ \exists t\in P\left(\forall j\in\mathbb{N}\left(j\leq n\ \Rightarrow a_j=\mathbf{val}(t,j)\ \bigwedge\ p_j=\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)^l\cdot\right.\right.\right.&&&\nonumber\\
-  &\quad\left.\left.\left.\left(Pr\left(\op[prob]{C}{}\right)+\frac{1-Pr\left(\op[prob]{C}{}\right)}{2}\right)\cdot\prod_{j=2}^k\left(Pr\left(\op[prob]{A}{i_j}\right)+\frac{1-Pr\left(\op[prob]{A}{i_j}\right)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\prod_{i=2}^m\left(Pr\left(\op[prob]{A}{j_i}\right)+\frac{1-Pr\left(\op[prob]{A}{j_i}\right)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\right.\right.\right.&&&\nonumber\\
-  &\qquad\mathbf{prob}(t,j)\Bigg)\ \bigwedge\ \left(v(t,x_{i_1}) \op{A}{i_2} v(t,x_{i_2}) \op{A}{i_3} \cdots \op{A}{i_k} v(t,x_{i_k})\right)\ \op{C}{}\ \left(v(t,x_{j_1}) \op{A}{j_2} v(t,x_{j_2}) \op{A}{j_3} \cdots \op{A}{j_m} v(t,x_{j_m})\right)\Bigg)\Bigg\}&&&\label{eq:sp_cond}\\
-  &\text{where,}\ l=\Bigg|\Bigg\{x\in\Big\{x_{i_1},x_{i_2}\cdots x_{i_k}\Big\}\bigcup\Big\{x_{j_1},x_{j_2}\cdots x_{j_m}\Big\}\Bigg| x\text{ is a variable}\Bigg\}\Bigg|&&&\nonumber
-\end{flalign}
-In the above equations,
-\begin{flalign}
-  &v(t,x_i)=\begin{cases}
-  		\mathbf{val}(t,i)       & \quad \text{if } x_i \text{ is a variable}\\
+  &\mathcal{V}\Big((v_1,v_2,\cdots,v_n),x_i\Big)=\begin{cases}
+  		v_i       & \quad \text{if } x_i \text{ is a variable}\\
   		x_i=C  & \quad \text{if } x_i \text{ is a constant, say } C\\
   \end{cases}\qquad\text{and}\qquad
-  p(t,x_i)=\begin{cases}
-  		\mathbf{prob}(t,i)       & \quad \text{if } x_i \text{ is a variable}\\
+  \mathcal{P}(P,x_i)=\begin{cases}
+  		p_i       & \quad \text{if } x_i \text{ is a variable}\\
   		1  & \quad \text{if } x_i \text{ is a constant}\\
   \end{cases}&&&\nonumber\\
   &\forall i,\quad\op[prob]{A}{i} \text{ is a probabilistic arithmatic operation}\quad\text{and}\quad\op{A}{i} \text{ is a deterministic arithmatic operation.}&&&\nonumber\\
@@ -327,24 +310,41 @@ In the above equations,
   &\text{i.e}\quad\op[prob]{C}{}\in\{<_{\bullet},>_{\bullet},\geq_{\bullet},\leq_{\bullet},==_{\bullet},\neq_{\bullet}\}\quad\op{C}{}\in\{>,<,\geq,\leq,==,\neq\}&&&\nonumber
 \end{flalign}
 \begin{flalign}
-  &sp\Big(P,\ x =_\bullet 0\Big)&=&\left\{\left(\left\langle0,\ Pr(Wr)+\frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right\rangle\right)\right\}&\label{eq:sp1}\\
-  &sp\Big(P,\ x =_\bullet x +_\bullet 3\Big)&=&\left\{\left(\left\langle\mathbf{val}(t,1) + 3,\ \mathbf{prob}(t,1)\cdot\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\right.\right.\right.\nonumber&\\
-  &&&\quad\left.\left.\left.\left(Pr(+_\bullet) + \frac{1-Pr(+_\bullet)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\left(Pr(Wr) + \frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\right\rangle\right)\ \middle|\ t\in P\right\}&\label{eq:sp2}\\
-  &sp\Big(P,\ x \leq_\bullet 9\Big)&=&\left\{\left(\left\langle\mathbf{val}(t,1),\ \mathbf{prob}(t,1)\cdot\left(Pr(\leq_\bullet) + \frac{1-Pr(\leq_\bullet)}{2}\right)\right\rangle\right)\ \middle|\ t\in P\bigwedge\mathbf{val}(t,1)\leq9\right\}&\label{eq:sp3}\\
-  &sp\Big(P,\ x \geq_\bullet 10\Big)&=&\left\{\left(\left\langle\mathbf{val}(t,1),\ \mathbf{prob}(t,1)\cdot\left(Pr(\geq_\bullet) + \frac{1-Pr(\geq_\bullet)}{2}\right)\right\rangle\right)\ \middle|\ t\in P\bigwedge\mathbf{val}(t,1)\geq 10\right\}\label{eq:sp4}&
+  &\quad sp\Big(P,\ x_{i_f} =_\bullet x_{i_1} \op[prob]{A}{2} x_{i_2} \op[prob]{A}{3} \cdots \op[prob]{A}{k} x_{i_k}\Big)&&&\nonumber\\
+  =&\quad sp\Big(\langle(S_1,p_1),(S_2,p_2),\cdots,(S_{i_f},p_{i_f}),\cdots,(S_n,p_n)\rangle,\ x_{i_f} =_\bullet x_{i_1} \op[prob]{A}{2} x_{i_2} \op[prob]{A}{3} \cdots \op[prob]{A}{k} x_{i_k}\Big)&&&\nonumber\\
+  =&\quad \langle(S_1,p_1),(S_2,p_2),\cdots,(S^*_{i_f},p^*_{i_f}),\cdots,(S_n,p_n)\rangle = P^*&&&\label{eq:sp_arith}\\
+  &\text{where,}\qquad S^*_{i_f}=\left\{\mathcal{V}(t,x_{i_1}) \op{A}{2} \mathcal{V}(t,x_{i_2})  \op{A}{3} \cdots \op{A}{k} \mathcal{V}(t,x_{i_k})\quad\middle|\quad\forall t\in S_1\times S_2\times\cdots\times S_n\right\}\qquad\text{and}&&&\nonumber\\
+  &\qquad\qquad\ \ p^*_{i_f}=\left(Pr(Wr)+\frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)^{|vars|}\cdot\prod_{j=1}^k \mathcal{P}(P,x_{i_j})\ \cdot&&&\nonumber\\
+  &\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\prod_{j=2}^k\left(Pr\left(\op[prob]{A}{j}\right)+\frac{1-Pr\left(\op[prob]{A}{j}\right)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)&&&\nonumber\\
+  &\text{where,}\qquad vars=\left\{x_{i_j}\ :\ \forall j\in \{1,2,\cdots,k\}\text{ and } x_{i_j}\text{ is a variable}\right\}&&&\nonumber\\\nonumber\\
+  &\quad sp\left(P,\ \left(x_{i_1} \op[prob]{A}{i_2} x_{i_2} \op[prob]{A}{i_3} \cdots \op[prob]{A}{i_k} x_{i_k}\right)\ \op[prob]{C}{}\ \left(x_{j_1} \op[prob]{A}{j_2} x_{j_2} \op[prob]{A}{j_3} \cdots \op[prob]{A}{j_m} x_{j_m}\right)\right)&&&\nonumber\\
+  =&\quad sp\left(\langle(S_1,p_1),(S_2,p_2),\cdots,(S_n,p_n)\rangle,\ \left(x_{i_1} \op[prob]{A}{i_2} x_{i_2} \op[prob]{A}{i_3} \cdots \op[prob]{A}{i_k} x_{i_k}\right)\ \op[prob]{C}{}\ \left(x_{j_1} \op[prob]{A}{j_2} x_{j_2} \op[prob]{A}{j_3} \cdots \op[prob]{A}{j_m} x_{j_m}\right)\right)&&&\nonumber\\
+  =&\quad \langle(S^*_1,p^*_1),(S^*_2,p^*_2),\cdots,(S^*_n,p^*_n)\rangle = P^*&&&\label{eq:sp_bool}\\
+  &\text{where,}\qquad\forall i\in\{1,2,\cdots,n\}&&&\nonumber\\
+  &\qquad\qquad\ \ S^*_i=\left\{t_i\ :\ \forall(t_1,t_2,\cdots,t_n)\in Q\right\}\qquad\text{and}&&&\nonumber\\
+  &\qquad\qquad\ \ p^*_i=p_i\cdot\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)^{|vars|}\cdot\left(Pr\left(\op[prob]{C}{}\right)+\frac{1-Pr\left(\op[prob]{C}{}\right)}{2}\right)\ \cdot&&&\nonumber\\
+  &\qquad\qquad\qquad\qquad\prod_{j=2}^k\left(Pr\left(\op[prob]{A}{i_j}\right)+\frac{1-Pr\left(\op[prob]{A}{i_j}\right)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\prod_{i=2}^m\left(Pr\left(\op[prob]{A}{j_i}\right)+\frac{1-Pr\left(\op[prob]{A}{j_i}\right)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)&&&\nonumber\\
+  &\text{where,}\qquad vars=\left\{x\in\{x_{i_1},x_{i_2}\cdots x_{i_k}\}\cup\{x_{j_1},x_{j_2}\cdots x_{j_m}\}\ :\ x\text{ is a variable}\right\}\quad\text{and}&&&\nonumber\\
+  &Q=\left\{t\in S_1\times S_2\times\cdots\times S_n\ \middle|\ \left(\mathcal{V}(t,x_{i_1}) \op{A}{i_2} \mathcal{V}(t,x_{i_2}) \op{A}{i_3} \cdots \op{A}{i_k} \mathcal{V}(t,x_{i_k})\right)\ \op{C}{}\ \left(\mathcal{V}(t,x_{j_1}) \op{A}{j_2} \mathcal{V}(t,x_{j_2}) \op{A}{j_3} \cdots \op{A}{j_m} \mathcal{V}(t,x_{j_m})\right)\right\}&&&\nonumber
 \end{flalign}
 
-and so on \ldots
+\noindent For our example program the definition of $sp$ will be as follows,
+\begin{flalign}
+  &sp\Big(\langle S,p\rangle,\ x =_\bullet 0\Big)&=&\left\langle\{0\},\ Pr(Wr)+\frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right\rangle&\label{eq:sp1}\\
+  &sp\Big(\langle S,p\rangle,\ x =_\bullet x +_\bullet 3\Big)&=&\left\langle\left\{v + 3\ :\ \forall v\in S\right\},\ p\cdot\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\right.\nonumber&\\
+  &&&\quad\left.\left(Pr(+_\bullet) + \frac{1-Pr(+_\bullet)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\left(Pr(Wr) + \frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\right\rangle&\label{eq:sp2}\\
+  &sp\Big(\langle S,p\rangle,\ x \leq_\bullet 9\Big)&=&\left\langle\left\{v\in S\ :\ v\leq 9\right\},\ p\cdot\left(Pr(\leq_\bullet) + \frac{1-Pr(\leq_\bullet)}{2}\right)\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\right\rangle&\label{eq:sp3}\\
+  &sp\Big(\langle S,p\rangle,\ x \geq_\bullet 10\Big)&=&\left\langle\left\{v\in S\ :\ v\geq 10\right\},\ p\cdot\left(Pr(\geq_\bullet) + \frac{1-Pr(\geq_\bullet)}{2}\right)\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\right\rangle&\label{eq:sp4}&
+\end{flalign}
 
-Here, P is a set of program states of the form $\big\{\big<a,\ p_a\big>\big\}$, with unique $a$'s, i.e $P\in L$.
 
 Further, for any program $\sigma,\ sp\big(P = \bot_L = \{\ \},\ \sigma\big) = \bot_L= \{\ \}$. If the predicate P defines a relation which is not satisfied by any possible program state, or speaking set theoretically if P is an empty set, then it is not possible for $\sigma$ to execute at all since there is no state to start from. Thus the set of states reachable is also empty. Hence, the strongest post-condition is the empty set.
 
 Using the notion of $sp$, we are interested in computing the set of reachable program states for every program point which is known as \textbf{\textit{collecting semantics}}. For each program point $v_i$, let $g_i$ denotes the set of reachable program states. We can consider these collection of program states, $\big(g_i\big)$ as \textbf{pre-condition} predicates for the succeeding program statement. In that case, they are linked by $sp$ to give the following system of equation.
 
 \begin{tabular}{lcl}
-$g_0$ & = & $\Big\{\big\langle a,\ 1\big\rangle\ \big|\ \forall a\in\mathbb{Z}\bigwedge\mathtt{MININT}\leq a\leq\mathtt{MAXINT}\Big\}$ \\
-$g_1$ & = & $\displaystyle sp\big(g_0,\ x =_\bullet 0\big)\bigsqcup_L sp\big(g_2, x =_\bullet x +_\bullet 3\big)$ \\
+$g_0$ & = & $\Big\langle\Big\{a\in\mathbb{Z}\ \big|\ \mathtt{MININT}\leq a\leq\mathtt{MAXINT}\Big\},\ 1\Big\rangle$ \\
+$g_1$ & = & $\displaystyle sp\big(g_0,\ x =_\bullet 0\big)\bigsqcup_L sp\big(g_2,\ x =_\bullet x +_\bullet 3\big)$ \\
 $g_2$ & = & $sp\big(g_1,\ x \leq_\bullet9\big)$ \\
 $g_3$ & = & $sp\big(g_1,\ x \geq_\bullet10\big)$ \\
 \end{tabular}\\
@@ -353,56 +353,32 @@ We can derive an overall function $\mathcal{F}$,
 $$\mathcal{F}\big(g_0,\ g_1,\ g_2,\ g_3\big) = \Big(g_0,\ sp\big(g_0,\ x =_\bullet 0\big)\bigsqcup_L sp\big(g_2,\ x =_\bullet x +_\bullet 3\big),\ sp\big(g_1,\ x \leq_\bullet 9\big),\ sp\big(g_1,\ x \geq_\bullet 10\big)\Big)$$
 that maps each $g_i$ to new values of $g_i$ iteratively. The least fixed point of $\mathcal{F}$ is the final solution. We can arrive at the solution by computing the sequence, $\mathcal{F}^n\big(\bot_L,\ \bot_L,\ \bot_L,\ \bot_L\big)$\ starting with the least elements, i.e. the empty sets.
 
-For the sake of the example we assume all the success probabilities to be $1-10^{-2}$, i.e $Pr(+_\bullet)=Pr(-_\bullet)=Pr(Rd)=Pr(Wr)=Pr(\leq_\bullet)=\quad\cdots\quad=1-10^{-2}$ and value of $\mathtt{MININT}$ and $\mathtt{MAXINT}$ to be $-32768$ and $32767$ respectively. Therefore, $\displaystyle\quad\left(Pr(+_\bullet)+\frac{1-Pr(+_\bullet)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)=0.9900001526=x\quad\text{and}\quad\left(Pr(\leq_\bullet)+\frac{1-Pr(\leq_\bullet)}{2}\right)=0.995=y\text{ (say)}$
+For the sake of the example we assume all the success probabilities to be $1-10^{-4}$, i.e $Pr(+_\bullet)=Pr(-_\bullet)=Pr(Rd)=Pr(Wr)=Pr(\leq_\bullet)=\quad\cdots\quad=1-10^{-4}$ and values of $\mathtt{MININT}$ and $\mathtt{MAXINT}$ to be $-32768$ and $32767$ respectively. $\therefore\displaystyle\quad\left(Pr(+_\bullet)+\frac{1-Pr(+_\bullet)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)=0.99990000152=x\quad\text{and}\quad\left(Pr(\leq_\bullet)+\frac{1-Pr(\leq_\bullet)}{2}\right)=0.99995=y\text{ (say)}$\\
 
 Solving iteratively would give us a solution as follows
 
 \noindent
 $
 \bigg(\bot_L,\ \bot_L,\ \bot_L,\ \bot_L\bigg)\ \to\ 
-\bigg(\Big\{\big\langle a,\ 1\big\rangle\ \big|\ \forall a\in\mathbb{Z}\bigwedge\mathtt{MININT}\leq a\leq\mathtt{MAXINT}\Big\},\ \bullet,\ \bullet,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \Big\{\big\langle 0,\ x\big\rangle\Big\},\ \bullet,\ \bullet\bigg)\ \to
+\bigg(\Big\langle\Big\{a\in\mathbb{Z}\ \big|\ \mathtt{MININT}\leq a\leq\mathtt{MAXINT}\Big\},\ 1\Big\rangle,\ \bullet,\ \bullet,\ \bullet\bigg)\ \to\ 
+\bigg(\bullet,\ \Big\langle\Big\{0\Big\},\ x\Big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \bullet,\ \Big\langle\Big\{0\Big\},\ x^2y\Big\rangle,\ \bullet\bigg)\ \to
 $\\
 $
-\bigg(\bullet,\ \bullet,\ \Big\{\big\langle 0,\ xy\big\rangle\Big\},\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \Big\{\big\langle 0,\ x\big\rangle,\big\langle 3,\ x^4y\big\rangle\Big\},\ \bullet,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \bullet,\ \Big\{\big\langle 0,\ xy\big\rangle,\big\langle 3,\ x^4y^2\big\rangle\Big\},\ \bullet\bigg)\ \to\ 
+\bigg(\bullet,\ \Big\langle\Big\{0,3\Big\},\ x^5y\Big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \bullet,\ \Big\langle\Big\{0,3\Big\},\ x^6y^2\Big\rangle,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \Big\langle\Big\{0,3,6\Big\},\ x^9y^2\Big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \bullet,\ \Big\langle\Big\{0,3,6\Big\},\ x^{10}y^3\Big\rangle,\ \bullet\bigg)\ \to\ 
 $\\
 $
-\bigg(\bullet,\ \Big\{\big\langle 0,\ x\big\rangle,\big\langle 3,\ x^4y\big\rangle,\big\langle 6,\ x^7y^2\big\rangle\Big\},\ \bullet,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \bullet,\ \Big\{\big\langle 0,\ xy\big\rangle,\big\langle 3,\ x^4y^2\big\rangle,\big\langle 6,\ x^7y^3\big\rangle\Big\},\ \bullet\bigg)\ \to\ 
-$\\
-$
-\bigg(\bullet,\ \Big\{\big\langle 0,\ x\big\rangle,\big\langle 3,\ x^4y\big\rangle,\big\langle 6,\ x^7y^2\big\rangle,\big\langle 9,\ x^{10}y^3\big\rangle\Big\},\ \bullet,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \bullet,\ \Big\{\big\langle 0,\ xy\big\rangle,\big\langle 3,\ x^4y^2\big\rangle,\big\langle 6,\ x^7y^3\big\rangle,\big\langle 9,\ x^{10}y^4\big\rangle\Big\},\ \bullet\bigg)\ \to\ 
-$\\
-$
-\bigg(\bullet,\ \Big\{\big\langle 0,\ x\big\rangle,\big\langle 3,\ x^4y\big\rangle,\big\langle 6,\ x^7y^2\big\rangle,\big\langle 9,\ x^{10}y^3\big\rangle,\big\langle 12,\ x^{13}y^4\big\rangle\Big\},\ \bullet,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \bullet,\ \bullet,\ \Big\{\big\langle 12,\ x^{13}y^5\big\rangle\Big\}\bigg)
+\bigg(\bullet,\ \Big\langle\Big\{0,3,6,9\Big\},\ x^{13}y^3\Big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \bullet,\ \Big\langle\Big\{0,3,6,9\Big\},\ x^{14}y^4\Big\rangle,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \Big\langle\Big\{0,3,6,9,12\Big\},\ x^{17}y^4\Big\rangle,\ \bullet,\ \bullet\bigg)\ \ \to\ \bigg(\bullet,\ \bullet,\ \bullet,\ \Big\langle\Big\{12\Big\},\ x^{18}y^5\Big\rangle\bigg)
 $\\
        
 The '$\bullet$' indicates, repetition of value from previous iteration. The overall solution is therefore
 
-$\bigg($
+\noindent$\bigg(\Big\langle\Big\{a\in\mathbb{Z}\ \big|\ \mathtt{MININT}\leq a\leq\mathtt{MAXINT}\Big\},\ 1\Big\rangle,\ \Big\langle\Big\{0,3,6,9,12\Big\},\ x^{17}y^4\Big\rangle,\ \Big\langle\Big\{0,3,6,9\Big\},\ x^{14}y^4\Big\rangle,\ \Big\langle\Big\{12\Big\},\ x^{18}y^5\Big\rangle\bigg)\ =$
 
-$\qquad\Big\{\big\langle a,\ 1\big\rangle\ \big|\ \forall a\in\mathbb{Z}\bigwedge-32768\leq a\leq32767\Big\},
-$
+\noindent$\bigg(\Big\langle\Big\{a\in\mathbb{Z}\ \big|\ -32768\leq a\leq 32767\Big\},\ 1\Big\rangle,\ \Big\langle\Big\{0,3,6,9,12\Big\},\ 0.99810173981\Big\rangle,\ \Big\langle\Big\{0,3,6,9\Big\},\ 0.99840122568\Big\rangle,\ \Big\langle\Big\{12\Big\},\ 0.99795203106\Big\rangle\bigg)$
 
-$\qquad\Big\{\big\langle 0,\ 0.9900001526\big\rangle,\big\langle 3,\ 0.955793619\big\rangle,\big\langle 6,\ 0.922768992\big\rangle,\big\langle 9,\ 0.890885433\big\rangle,\big\langle 12,\ 0.860103516\big\rangle\Big\},
-$
+In general, we may need infinite number of iterations to converge. This is because the height of the lattice $L$ is $\infty$. But for practical purpose we stop iterating as soon as the values converge.
 
-$\qquad\Big\{\big\langle 0,\ 0.985050152\big\rangle,\big\langle 3,\ 0.951014651\big\rangle,\big\langle 6,\ 0.918155147\big\rangle,\big\langle 9,\ 0.886431006\big\rangle\Big\},
-$
-
-$\qquad\Big\{\big\langle 12,\ 0.855802998\big\rangle\Big\}
-$
-
-$\bigg)$
-
-In general, we may need infinite number of iterations to converge. This is because the height of the lattice $L$ is $\infty$.
-
-
-\section{The Probabilistic Interval Abstract Domain, $M$}
+\section{The Probabilistic Interval Abstract Domain, $\mathcal{M}:(M,\sqsubseteq_M)$}
 
 In this domain, $M$, the elements are of the form of tuples, $\langle[a,b],p_{ab}\rangle$, i.e with each interval there is a corresponding probability. Program variables are assigned these tuples at different program points instead of set of concrete values. E.g: program variable $x_i$ takes value $\langle[a,b],p_{ab}\rangle$ at a particular program point $v_i$, signifies that value of $x_i$ lies in the interval $[a,b]$ at that program point with probability $p_{ab}$.
 
@@ -421,17 +397,17 @@ Intuitively we lose precision in the interval that comes higher in the order.
 
 Similar intuition is applicable in defining $\sqsubseteq_M$ on \textbf{Probabilistic Interval Abstract Domain} also. Two elements of $M$ are related by $\sqsubseteq_M$ if we lose precision in the element that comes higher in the order. Here, by precision we mean the \textit{accuracy (probability mass)} with which we can determine whether a program variable takes its values from the corresponding interval. For example, if one element $\langle[a,b],p_{ab}\rangle$ is more precise than another $\langle[a',b'],p'_{ab}\rangle$, this means that, with \textit{more accuracy (higher probability mass)} we can determine that program varuiable $x_i$ (say) takes its values from interval $[a,b]$ than it takes values from $[a',b']$.
 
-We define,
+We define a partial order $\sqsubseteq_M$ on $M$ as follows :
 
-\centerline{\hl{$\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$}}
+\centerline{\hl{$\forall \langle[a,b],p_{ab}\rangle, \langle[c,d],p_{cd}\rangle\in M\qquad\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$}}
 iff
 \begin{enumerate}[i)]
 \item \hl{$[a,b]\sqsubseteq_{int}[c,d]$}
 \item \hl{$p.m.f\Big(\langle[a,b],p_{ab}\rangle\Big)\geq\ p.m.f\Big(\langle[c,d],p_{cd}\rangle\Big)$}
 \end{enumerate}
-\hl{all the above conditions hold simultaneously.} So, clearly tuples whose intervals aren't related by $\sqsubseteq_{int}$ will not partake in $\sqsubseteq_M$.
+all the above conditions hold simultaneously. So, clearly tuples whose intervals aren't related by $\sqsubseteq_{int}$ will not partake in $\sqsubseteq_M$.
 
-$\sqsubseteq_M$ is a \textbf{partial order relation}. For its proof please refer to \ref{app:interval_partial}. Formal definition of the \textbf{Probabilistic Interval Abstract Domain}, $M$, is :
+$\sqsubseteq_M$ is a \textbf{partial order relation}. For its proof please refer to \ref{app:interval_partial}. Formal definition of the \textbf{Probabilistic Interval Abstract Domain}, $M$, is $M\subseteq \mathbb{Z}^2\times\mathbb{R}$, such that,
 
 \hl{$M=\big\{\langle[a,b],p_{ab}\rangle\ \ |\ \ a,b\in\mathbb{Z}, p_{ab}\in\mathbb{R}, \mathtt{MININT}\leq a\leq b\leq\mathtt{MAXINT}, 0\leq p_{ab}\leq1\big\}\ \bigcup\ \big\{\perp_M\big\}$\\
 where $\perp_M$ is the least element of $M$. $\bot_M=\langle[\ ],1\rangle$ i.e the tuple of empty interval and probability 1.} For $n$ number of program variables this domain will be $M^n$.
@@ -484,49 +460,50 @@ $$\forall l\in L : l\sqsubseteq_L \GAMMA\Big(\ALPHA\big(l\big)\Big)\qquad\text{a
 
 Before going on with the definition of $(\ALPHA,\GAMMA)$ we define few utility functions over $L$, the concrete domain.
 \begin{subequations}
-  $\qquad\qquad\qquad\qquad \forall S\in L$:
+  $\qquad\qquad\forall \langle S,p\rangle\in L,\text{ such that }\ S\neq\phi$
   \begin{align}
-    &\mathbf{MIN_v}\Big(S\Big)=v_m&\text{where,}\quad v_m\in\big\{\mathbf{val}(t)\ |\ \forall t\in S\big\}\ \bigwedge\ \forall v\ \Big(\big(v\in\{\mathbf{val}(t)\ |\ \forall t\in S\big\}\big)\Rightarrow v_m\leq v)\\
-    &\mathbf{MAX_v}\Big(S\Big)=v_M&\text{where,}\quad v_M\in\big\{\mathbf{val}(t)\ |\ \forall t\in S\big\}\ \bigwedge\ \forall v\ \Big(\big(v\in\{\mathbf{val}(t)\ |\ \forall t\in S\big\}\big)\Rightarrow v\leq v_M)\\
-    &\mathbf{MIN_p}\Big(S\Big)=p_m&\text{where,}\quad p_m\in\big\{\mathbf{prob}(t)\ |\ \forall t\in S\big\}\ \bigwedge\ \forall p\ \Big(\big(p\in\{\mathbf{prob}(t)\ |\ \forall t\in S\big\}\big)\Rightarrow p_m\leq p)
+    &\mathcal{V}_m\Big(\langle S,p\rangle\Big)=v_m\qquad\qquad\text{where,}\quad v_m\in S\ \bigwedge\ \forall v\in S\ \Rightarrow\ v_m\leq v&\\
+    &\mathcal{V}_M\Big(\langle S,p\rangle\Big)=v_M\qquad\qquad\text{where,}\quad v_M\in S\ \bigwedge\ \forall v\in S\ \Rightarrow\ v_M\geq v&
   \end{align}
 \end{subequations}
-So, $\mathbf{MIN_v}$ and $\mathbf{MAX_v}$ returns respectively the \textbf{minimum} and \textbf{maximum} of all \textbf{values} among all the tuples of a member set of $L$. Where as $\mathbf{MIN_p}$ returns the \textbf{minimum} of all \textbf{probabilities} among all the tuples in a set of $L$. For example, if $S=\big\{\big\langle a_1,p_{a_1}\rangle,\langle a_2,p_{a_2}\rangle,\langle a_3,p_{a_3}\rangle\}\text{\ then}\qquad\mathbf{MIN_v}\Big(S\Big)=\mathbf{min}\big(a_1,a_2,a_3\big),\qquad\mathbf{MAX_v}\Big(S\Big)=\mathbf{max}\big(a_1,a_2,a_3\big)\qquad\text{and}\\\mathbf{MIN_p}\Big(S\Big)=\mathbf{min}\big(p_{a_1},p_{a_2},p_{a_3}\big)$\\
+$\therefore\mathcal{V}_m$ and $\mathcal{V}_M$ returns respectively the \textbf{minimum} and \textbf{maximum} of all \textbf{values} of a member of $L$ whose value set is not empty. For example, if $\quad l=\Big\langle\big\{a_1,a_2,a_3\big\},p\Big\rangle\in L\text{\ then}\qquad\mathcal{V}_m\Big(l\Big)=\mathbf{min}\big(a_1,a_2,a_3\big)\quad\text{and}\quad\mathcal{V}_M\Big(l\Big)=\mathbf{max}\big(a_1,a_2,a_3\big)$\\
 
 We now define $(\ALPHA,\GAMMA)$ as follows :
 \begin{align}
-\ALPHA\big(S\big)= 
+\ALPHA\big(\langle S,p\rangle\big)= 
   \begin{cases} 
-    \big\langle[\ ],\ 1\big\rangle=\bot_M        &        S=\bot_L=\{\ \}\\
-    \bigg\langle\Big[\mathbf{MIN_v}\big(S\big),\ \mathbf{MAX_v}\big(S\big)\Big],\ \mathbf{min}\bigg(1,\ \mathbf{MIN_p}\big(S\big)*\Big(\mathbf{MAX_v}\big(S\big)-\mathbf{MIN_v}\big(S\big)+1\Big)\bigg)\bigg\rangle        &        \text{otherwise}
-  \end{cases}\label{eq:alpha}
+    \big\langle[\ ],\ 1\big\rangle=\perp_M        &        \big\langle S,p\big\rangle=\big\langle\{\ \},\ 1\big\rangle=\perp_L\\
+    \bigg\langle\Big[\mathcal{V}_m\Big(\langle S,p\rangle\Big),\ \mathcal{V}_M\Big(\langle S,p\rangle\Big)\Big],\ \mathbf{min}\bigg(1,\ p\cdot\Big(\mathcal{V}_M\Big(\langle S,p\rangle\Big)-\mathcal{V}_m\Big(\langle S,p\rangle\Big)+1\Big)\bigg)\bigg\rangle        &        \text{otherwise}
+  \end{cases}\label{eq:alpha}  
 \end{align}
 
 \begin{equation}
  \left.\begin{aligned}
-        &\GAMMA\Big(\big\langle[\ ],\ 1\big\rangle\Big)&=&\quad\big\{\ \big\}=\bot_L&\\
-        &\GAMMA\Big(\big\langle[a,\ b],\ p_{ab}\big\rangle\Big)&=&\quad\left\{\Big\langle i,\ p.m.f\big(\langle[a,b],p_{ab}\rangle\big)\Big\rangle\quad\middle|\quad i\in[a,b]\right\}&
+        &\GAMMA\Big(\big\langle[\ ],\ 1\big\rangle\Big)&=&\quad\Big\langle\big\{\ \big\},\ 1\Big\rangle=\perp_L&\\
+        &\GAMMA\Big(\big\langle[a,\ b],\ p_{ab}\big\rangle\Big)&=&\quad\bigg\langle\bigg\{i\in\mathbb{Z}\ :\ a\leq i\leq b\bigg\},\ p.m.f\Big(\langle[a,b],p_{ab}\rangle\Big)\bigg\rangle\qquad\qquad\qquad\qquad&
        \end{aligned}
  \right\}\label{eq:gamma}
-\end{equation}\\
+\end{equation}
 
-For the proof of monotonicity of $\ALPHA$ and $\GAMMA$ please refer to \ref{app:monotonicity}.\\
+For the proof of monotonicity of $\ALPHA$ and $\GAMMA$ please refer to \ref{app:monotonicity}.
 
-$\forall A\in L\qquad A\sqsubseteq_L\ $$\GAMMA$$\Big($$\ALPHA$$\big(\bot_L\big)\Big)$.\indent And this can be proved easily by expanding the definitions of $\ALPHA$ and $\GAMMA$.
+\noindent Now we show that $\ALPHA$ and $\GAMMA$ follow the conditions for Galois Connection.
 
-If $\quad A=\bot_L,\quad$ we have $\qquad\bot_L\sqsubseteq_L\ $$\GAMMA$$\Big($$\ALPHA$$\big(\bot_L\big)\Big)\qquad\big[\ \because\quad$$\ALPHA$$\big(\bot_L\big)=\bot_M\quad\text{and}\quad$$\GAMMA$$\big(\bot_M\big)=\bot_L\big]$
+\noindent$\forall \langle S,p\rangle\in L\qquad \langle S,p\rangle\sqsubseteq_L\ $$\GAMMA$$\Big($$\ALPHA$$\big(\langle S,p\rangle\big)\Big)$.\indent And this can be proved easily by expanding the definitions of $\ALPHA$.
 
-Otherwise, $\quad$$\GAMMA$$\Big($$\ALPHA$$\big(A\big)\Big)=\left\{\left\langle i,\ \displaystyle\mathbf{min}\left(\frac{1}{\mathbf{MAX_v}(A)-\mathbf{MIN_v}(A)+1},\ \mathbf{MIN_p}\left(A\right)\right)\right\rangle\quad\middle|\quad i\in\big[\mathbf{MIN_v}(A), \mathbf{MAX_v}(A)\big]\right\}$
+If $\quad \langle S,p\rangle=\langle\phi,1\rangle=\perp_L,\quad$ we trivially have $\qquad\langle\{\},1\rangle=\ $$\GAMMA$$\Big($$\ALPHA$$\big(\langle\{\},1\rangle\big)\Big)\quad$ i.e $\quad\langle\{\},1\rangle\sqsubseteq_L\ $$\GAMMA$$\Big($$\ALPHA$$\big(\langle\{\},1\rangle\big)\Big)$
 
-And $\qquad A\sqsubseteq_L\ \left\{\left\langle i,\ \displaystyle\mathbf{min}\left(\frac{1}{\mathbf{MAX_v}(A)-\mathbf{MIN_v}(A)+1},\ \mathbf{MIN_p}\left(A\right)\right)\right\rangle\quad\middle|\quad i\in\big[\mathbf{MIN_v}(A), \mathbf{MAX_v}(A)\big]\right\}\footnote{Trivially follows from the definition of $\sqsubseteq_L$}$\\
+Otherwise, $\quad$$\GAMMA$$\Big($$\ALPHA$$\big(\langle S,p\rangle\big)\Big)=\left\langle\left\{i\in\mathbb{Z}\ \middle|\ \mathcal{V}_m\Big(\langle S,p\rangle\Big)\leq i\leq\mathcal{V}_M\Big(\langle S,p\rangle\Big)\right\},\ \mathbf{min}\left(p,\ \displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S,p\rangle\Big)-\mathcal{V}_m\Big(\langle S,p\rangle\Big)+1}\right)\right\rangle$
 
-Similarly, we can prove that $\qquad\forall m\in M\quad $$\ALPHA$$\Big($$\GAMMA$$\big(m\big)\Big)\sqsubseteq_M\ m$
+and $\qquad \langle S,p\rangle\sqsubseteq_L\left\langle\left\{i\in\mathbb{Z}\ \middle|\ \mathcal{V}_m\Big(\langle S,p\rangle\Big)\leq i\leq\mathcal{V}_M\Big(\langle S,p\rangle\Big)\right\},\ \mathbf{min}\left(p,\ \displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S,p\rangle\Big)-\mathcal{V}_m\Big(\langle S,p\rangle\Big)+1}\right)\right\rangle\footnote{Trivially follows from the definition of $\sqsubseteq_L$}$\\
 
-If $\quad m=\bot_M,\qquad$ we have $\qquad$$\ALPHA$$\Big($$\GAMMA$$\big(\bot_M\big)\Big)\sqsubseteq_M\ \bot_M\qquad\big[\ \because\quad$$\GAMMA$$\big(\bot_M\big)=\bot_L\quad\text{and}\quad$$\ALPHA$$\big(\bot_L\big)=\bot_M\big]$
+\noindent Similarly, we can prove that $\qquad\forall m\in M\quad $$\ALPHA$$\Big($$\GAMMA$$\big(m\big)\Big)\sqsubseteq_M\ m$
 
-Otherwise, $\quad$$\ALPHA$$\bigg($$\GAMMA$$\Big(\langle [a,b],p_{ab}\rangle\Big)\bigg) =\ $$\ALPHA$$\left(\left\{\Big\langle i,\ p.m.f\big(\langle[a,b],p_{ab}\rangle\big)\Big\rangle\quad\middle|\quad i\in[a,b]\right\}\right)=\ \langle [a,b],p_{ab}\rangle$
+If $\quad m=\langle[],1\rangle=\perp_M,\qquad$ we have $\qquad$$\ALPHA$$\Big($$\GAMMA$$\big(\langle[],1\rangle\big)\Big)=\ \langle[],1\rangle\quad$ i.e $\qquad$$\ALPHA$$\Big($$\GAMMA$$\big(\langle[],1\rangle\big)\Big)\sqsubseteq_M\ \langle[],1\rangle\quad$
 
-$\therefore\quad$$\ALPHA$$\Big($$\GAMMA$$\big(m\big)\Big) =\ m\sqsubseteq_M\ m\qquad\forall m\in M\bigwedge m\neq\bot_M$
+Otherwise, $\quad$$\ALPHA$$\bigg($$\GAMMA$$\Big(\langle [a,b],p_{ab}\rangle\Big)\bigg) =\ $$\ALPHA$$\left(\left\langle\left\{i\in\mathbb{Z}\ :\ a\leq i\leq b,\right\},\ \displaystyle\frac{p_{ab}}{b-a+1}\right\rangle\right)=\ \langle[a,b],p_{ab}\rangle$\footnote{$\because p_{ab}\leq 1$}
+
+$\therefore\quad$$\ALPHA$$\Big($$\GAMMA$$\big(m\big)\Big) =\ m\sqsubseteq_M\ m\qquad\forall m\in M$
 
 \section{Safe approxmation of strongest post-condition function $sp$ in the abstract domain $M$}
 
@@ -541,33 +518,37 @@ The functions $\ALPHA$ and $\GAMMA$ are defined earlier for the Probalilistic In
 \centerline{
 \hl{$\ALPHA$$\Big(sp\big($$\GAMMA$$(m),\ \sigma\big)\Big)=sp^\#\big(m,\ \sigma\big)$}
 }
-Therefore, using $\ALPHA$ and $\GAMMA$ from equations \ref{eq:alpha} and \ref{eq:gamma} respectively, we can use the above relation to compute $sp^\#$. A few examples of $sp^\#(m,\sigma)$ for different kinds of program statements are as follows.
+Therefore, using $\ALPHA$ and $\GAMMA$ from equations \ref{eq:alpha} and \ref{eq:gamma} respectively, we can use the above relation to compute $sp^\#$. A few examples of $sp^\#(m,\sigma)$ for different kinds of program statements are as follows. For notational convenience we write
+
+$\displaystyle Rel(Rd)=Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\qquad Rel(Wr)=Pr(Wr) + \frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}$\\
+
+$\displaystyle Rel(+_{\bullet})=Pr(+_{\bullet}) + \frac{1-Pr(+_{\bullet})}{\mathtt{MAXINT}-\mathtt{MININT}+1}\qquad Rel(\leq_{\bullet})=Pr(\leq_{\bullet}) + \frac{1-Pr(\leq_{\bullet})}{2}$\\
+
+$\displaystyle Rel(\geq_{\bullet})=Pr(\geq_{\bullet}) + \frac{1-Pr(\geq_{\bullet})}{2}$
+
 \begin{flalign}
-  &sp^\#\Big(\big\langle[a,b],p_{ab}\big\rangle,\ x =_\bullet 0\Big)&=\ &\ALPHA\Big(sp\big(\GAMMA\big(\big\langle[a,b],p_{ab}\big\rangle\big),\ x =_\bullet 0\big)\Big)&\nonumber\\
-  &&=\ &\ALPHA\Big(sp\Big(\Big\{\big\langle i,\ p.m.f\big(\langle[a,b],p_{ab}\rangle\big)\big\rangle\ \big|\ i\in[a,b]\Big\},\ x =_\bullet 0\Big)\Big)\qquad\text{[from \ref{eq:gamma}]}&\nonumber\\
-  &&=\ &\ALPHA\left(\left\{\left\langle0,\ Pr(Wr)+\frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right\rangle\right\}\right)\qquad\text{[from \ref{eq:sp1}]}&\nonumber\\
-  &&=\ &\left\langle\Big[0,0\Big],\ Pr(Wr)+\frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right\rangle\qquad\text{[from \ref{eq:alpha}]}& \\
-  &sp^\#\Big(\big\langle[a,b],p_{ab}\big\rangle,\ x =_\bullet x +_\bullet 3\Big)&=\ &\left\langle\Big[a+3,b+3\Big],\ p_{ab}\cdot\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\right.\nonumber&\\
-  &&&\qquad\left.\left(Pr(+_\bullet) + \frac{1-Pr(+_\bullet)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\left(Pr(Wr) + \frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\right\rangle&\\
-  &sp^\#\Big(\big\langle[a,b],p_{ab}\big\rangle,\ x \leq_\bullet 9\Big)&=\ &
+  &sp^\#\Big(\big\langle[a,b],p\big\rangle,\ x =_\bullet 0\Big)&=\ &\ALPHA\Big(sp\big(\GAMMA\big(\big\langle[a,b],p\big\rangle\big),\ x =_\bullet 0\big)\Big)&\nonumber\\
+  &&=\ &\ALPHA\Big(sp\Big(\left\langle\left\{i\in\mathbb{Z}\ :\ a\leq i\leq b\right\},\ p.m.f\big(\langle[a,b],p\rangle\big)\right\rangle,\ x =_\bullet 0\Big)\Big)\qquad\text{[from \ref{eq:gamma}]}&\nonumber\\
+  &&=\ &\ALPHA\left(\left\langle\Big\{0\Big\},\ Rel(Wr)\right\rangle\right)\qquad\text{[from \ref{eq:sp1}]}&\nonumber\\
+  &&=\ &\left\langle\Big[0,0\Big],\ Rel(Wr)\right\rangle\qquad\text{[from \ref{eq:alpha}]}& \\
+  &sp^\#\Big(\big\langle[a,b],p\big\rangle,\ x =_\bullet x +_\bullet 3\Big)&=\ &\left\langle\Big[a+3,b+3\Big],\ p\cdot Rel(Rd)\cdot Rel(+_{\bullet})\cdot Rel(Wr)\right\rangle&\\
+  &sp^\#\Big(\big\langle[a,b],p\big\rangle,\ x \leq_\bullet 9\Big)&=\ &
   \begin{cases} 
-   \quad\displaystyle\left\langle\Big[a,b\Big],\ p_{ab}\cdot\left(Pr(\leq_\bullet) + \frac{1-Pr(\leq_\bullet)}{2}\right)\right\rangle       & \text{if } b < 9\\
-   \quad\displaystyle\left\langle\Big[a,9\Big],\ p_{ab}\cdot\left(Pr(\leq_\bullet) + \frac{1-Pr(\leq_\bullet)}{2}\right)\cdot\frac{9-a+1}{b-a+1}\right\rangle       & \text{if } a\leq 9\leq b\\
+   \quad\displaystyle\left\langle\Big[a,b\Big],\ p\cdot Rel(Rd)\cdot Rel(\leq_{\bullet})\right\rangle       & \text{if } b < 9\\
+   \quad\displaystyle\left\langle\Big[a,9\Big],\ \frac{p\cdot(9-a+1)}{b-a+1}\cdot Rel(Rd)\cdot Rel(\leq_{\bullet})\right\rangle       & \text{if } a\leq 9\leq b\\
    \quad\bot_M       & \text{if } 9 < a
   \end{cases}&\\
-  &sp^\#\Big(\big\langle[a,b],p_{ab}\big\rangle,\ x \geq_\bullet 10\Big)&=\ &
+  &sp^\#\Big(\big\langle[a,b],p\big\rangle,\ x \geq_\bullet 10\Big)&=\ &
   \begin{cases} 
-   \quad\displaystyle\left\langle\Big[a,b\Big],\ p_{ab}\cdot\left(Pr(\geq_\bullet) + \frac{1-Pr(\geq_\bullet)}{2}\right)\right\rangle       & \text{if } 10 < a\\
-   \quad\displaystyle\left\langle\Big[10,b\Big],\ p_{ab}\cdot\left(Pr(\geq_\bullet) + \frac{1-Pr(\geq_\bullet)}{2}\right)\cdot\frac{b-10+1}{b-a+1}\right\rangle       & \text{if } a\leq 10\leq b\\
+   \quad\displaystyle\left\langle\Big[a,b\Big],\ p\cdot Rel(Rd)\cdot Rel(\geq_{\bullet})\right\rangle       & \text{if } 10 < a\\
+   \quad\displaystyle\left\langle\Big[10,b\Big],\ \frac{p\cdot(b-10+1)}{b-a+1}\cdot Rel(Rd)\cdot Rel(\geq_{\bullet})\right\rangle       & \text{if } a\leq 10\leq b\\
    \quad\bot_M       & \text{if } b < 10
   \end{cases}&\\
   &sp^\#\Big(\bot_M=\big\langle[\ ],1\big\rangle,\ \sigma\Big)&=\ &\ALPHA\Big(sp\big(\GAMMA\big(\bot_M\big),\ \sigma\big)\Big)&\nonumber\\
-  &&=\ &\ALPHA\Big(sp\Big(\bot_L=\{\ \},\ \sigma\Big)\Big)&\nonumber\\
-  &&=\ &\ALPHA\left(\bot_L\right)\qquad[\because\ sp(\bot_L,\ \sigma)=\bot_L=\{\ \},\quad\text{for any program statement }\sigma]&\nonumber\\
+  &&=\ &\ALPHA\Big(sp\Big(\bot_L,\ \sigma\Big)\Big)&\nonumber\\
+  &&=\ &\ALPHA\left(\bot_L\right)\qquad[\because\ sp(\bot_L,\ \sigma)=\bot_L,\quad\text{for any program statement }\sigma]&\nonumber\\
   &&=\ &\bot_M&
 \end{flalign}
-
-and so on \ldots
 
 Let us now try the reachability computation in the abstract domain. Let the set of abstract program states at the different program points be defined as $g_0^\#,\ g_1^\#,\ g_2^\#,\ g_3^\#$ and the abstract version of the overall function $\mathcal{F}$ be defined as $\mathcal{F}^\#$. Then we shall have,
 
@@ -580,7 +561,7 @@ $g_3^\#$ & = & $sp^\#\big(g_1^\#,\ x \geq_\bullet 10\big)$ \\
 
 $$\mathcal{F}^\#\Big(g_0^\#,\ g_1^\#,\ g_2^\#,\ g_3^\#\Big)=\Big(\big\langle[\mathtt{MININT},\ \mathtt{MAXINT}],\ 1\big\rangle,\ sp^\#\big(g_0^\#,\ x =_\bullet 0\big)\bigsqcup_M sp^\#\big(g_2^\#,\ x =_\bullet x +_\bullet 3\big),\ sp^\#\big(g_1^\#,\ x\leq_\bullet 9\big),\ sp^\#\big(g_1^\#,\ x\geq_\bullet 10\big)\Big)$$
 
-For demonstration purpose we again assume all the success probabilities to be $1-10^{-2}$, i.e $Pr(+_\bullet)=Pr(-_\bullet)=Pr(Rd)=Pr(Wr)=Pr(\leq_\bullet)=\quad\cdots\quad=1-10^{-2}$ and value of $\mathtt{MININT}$ and $\mathtt{MAXINT}$ to be $-32768$ and $32767$ respectively. Therefore, $\displaystyle\quad\left(Pr(+_\bullet)+\frac{1-Pr(+_\bullet)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)=0.9900001526=x\quad\text{and}\quad\left(Pr(\leq_\bullet)+\frac{1-Pr(\leq_\bullet)}{2}\right)=0.995=y\text{ (say)}$
+For demonstration purpose we again assume all the success probabilities to be $1-10^{-4}$, i.e $Pr(+_\bullet)=Pr(-_\bullet)=Pr(Rd)=Pr(Wr)=Pr(\leq_\bullet)=\quad\cdots\quad=1-10^{-4}$ and value of $\mathtt{MININT}$ and $\mathtt{MAXINT}$ to be $-32768$ and $32767$ respectively. Therefore, $\displaystyle\quad\left(Pr(+_\bullet)+\frac{1-Pr(+_\bullet)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)=0.9999000015=x\quad\text{and}\quad\left(Pr(\leq_\bullet)+\frac{1-Pr(\leq_\bullet)}{2}\right)=0.99995=y\text{ (say)}$
 
 The least fixed point of $\mathcal{F^\#}$, i.e $(\mathcal{F^\#})^n(\bot_M, \bot_M, \bot_M, \bot_M)$ will be our final solution. The computation of
 
@@ -591,35 +572,25 @@ $
 \bigg(\bot_M,\ \bot_M,\ \bot_M,\ \bot_M\bigg)\ \to\ 
 \bigg(\big\langle[\mathtt{MININT},\mathtt{MAXINT}],\ 1\big\rangle,\ \bullet,\ \bullet,\ \bullet\bigg)\ \to\ 
 \bigg(\bullet,\ \big\langle[0,0],\ x\big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \bullet,\ \big\langle[0,0],\ xy\big\rangle,\ \bullet\bigg)\ \to
+\bigg(\bullet,\ \bullet,\ \big\langle[0,0],\ x^2y\big\rangle,\ \bullet\bigg)\ \to
 $\\
 $
 \bigg(\bullet,\ \big\langle[0,3],\ 1\big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \bullet,\ \big\langle[0,3],\ y\big\rangle,\ \bullet\bigg)\ \to\ 
+\bigg(\bullet,\ \bullet,\ \big\langle[0,3],\ xy\big\rangle,\ \bullet\bigg)\ \to\ 
 \bigg(\bullet,\ \big\langle[0,6],\ 1\big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \bullet,\ \big\langle[0,6],\ y\big\rangle,\ \bullet\bigg)\ \to
+\bigg(\bullet,\ \bullet,\ \big\langle[0,6],\ xy\big\rangle,\ \bullet\bigg)\ \to
 $\\
 $
-\bigg(\bullet,\ \big\langle[0,9],\ 1\big\rangle,\ \bullet,\ \bullet\bigg)\ \to
+\bigg(\bullet,\ \big\langle[0,9],\ 1\big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \bullet,\ \big\langle[0,9],\ xy\big\rangle,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \big\langle[0,12],\ 1\big\rangle,\ \bullet,\ \bullet\bigg)\ \to\ \bigg(\bullet,\ \bullet,\ \bullet,\ \big\langle[10,12],\ \frac{3}{13}xy\big\rangle\bigg)
 $\\
-$\bigg(\bullet,\ \bullet,\ \big\langle[0,9],\ y\big\rangle,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \big\langle[0,12],\ 1\big\rangle,\ \bullet,\ \bullet\bigg)\ \to
-$\\
-$
-\bigg(\bullet,\ \bullet,\ \big\langle[0,9],\ y\cdot\left(\frac{10}{13}\right)\big\rangle,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \big\langle[0,12],\ x^3y\big\rangle,\ \bullet,\ \bullet\bigg)\ \to
-$\\
-$
-\bigg(\bullet,\ \bullet,\ \big\langle[0,9],\ x^3y\cdot y\cdot\left(\frac{10}{13}\right)\big\rangle,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \big\langle[0,12],\ x^6y^2\big\rangle,\ \bullet,\ \bullet\bigg)\ \to
-$\\
-$
-\bigg(\bullet,\ \bullet,\ \big\langle[0,9],\ x^6y^2\cdot y\cdot\left(\frac{10}{13}\right)\big\rangle,\ \bullet\bigg)\ \to\ 
-\bigg(\bullet,\ \big\langle[0,12],\ x^9y^3\big\rangle,\ \bullet,\ \bullet\bigg)\ \to
-$\\
-    
-The '$\bullet$' indicates, repetition of value from previous iteration.
 
+The '$\bullet$' indicates, repetition of value from previous iteration. The overall solution is therefore
+
+\noindent$\bigg(\Big\langle[\mathtt{MININT},\leq\mathtt{MAXINT}],\ 1\Big\rangle,\ \Big\langle[0,12],\ 1\Big\rangle,\ \Big\langle[0,9],\ xy\Big\rangle,\ \Big\langle[10,12],\ \frac{3}{13}xy\Big\rangle\bigg)\ =$
+
+\noindent$\bigg(\Big\langle[\mathtt{MININT},\leq\mathtt{MAXINT}],\ 1\Big\rangle,\ \Big\langle[0,12],\ 1\Big\rangle,\ \Big\langle[0,9],\ 0.9998500065\Big\rangle,\ \Big\langle[10,12],\ 0.23073461688\Big\rangle\bigg)$
+
+In general, we may need infinite number of iterations to converge. This is because the height of the lattice $M$ is $\infty$. But for practical purpose we stop iterating as soon as the intervals are fixed.
  
 
 
@@ -1438,13 +1409,21 @@ In all the following diagrams, \underline{\textbf{solid lines}} represent direct
 \section{\\Proof of monotonicity of Galois connection $(\alpha,\gamma)$}
 \label{app:monotonicity}
 
-Let, $\langle[a,b],p_{ab}\rangle$ and $\langle[c,d],p_{cd}\rangle$ be two elements in $M$, with $\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$. We show that
+We know,
+\begin{equation*}
+  \begin{aligned}
+        &\GAMMA\Big(\big\langle[\ ],\ 1\big\rangle\Big)&=&\quad\Big\langle\big\{\ \big\},\ 1\Big\rangle=\perp_L&\\
+        &\GAMMA\Big(\big\langle[a,\ b],\ p_{ab}\big\rangle\Big)&=&\quad\bigg\langle\bigg\{i\in\mathbb{Z}\ :\ a\leq i\leq b\bigg\},\ p.m.f\Big(\langle[a,b],p_{ab}\rangle\Big)\bigg\rangle&
+  \end{aligned}
+\end{equation*}
+
+Let, $\langle[a,b],p_{ab}\rangle$ and $\langle[c,d],p_{cd}\rangle$ be two elements in $M$, with $\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$\footnote{If $\quad\perp_M\sqsubseteq_M\langle[a,b],p_{ab}\rangle$, we trivially have $\quad$$\GAMMA$$\Big(\perp_M\Big)\sqsubseteq_L\ $$\GAMMA$$\Big(\langle[a,b],p_{ab}\rangle\Big)\quad$[$\ \because$$\GAMMA$$\Big(\perp_M\Big)=\perp_L$ is the least element in $\mathcal{L}$]}. We show that
 
 \centerline{
-  $\GAMMA$$\Big(\langle[a,b],p_{ab}\rangle\Big)\sqsubseteq_L\ $$\GAMMA$$\Big(\langle[c,d],p_{cd}\rangle\Big)$\footnote{This is trivial to show that, if $\bot_M\sqsubseteq_M\langle[a,b],p_{ab}\rangle$ then $\GAMMA$$\Big(\bot_M\Big)=\bot_L\sqsubseteq_L\ $$\GAMMA$$\Big(\langle[a,b],p_{ab}\rangle\Big)$ using definition \ref{eq:gamma}}
+  $\GAMMA$$\Big(\langle[a,b],p_{ab}\rangle\Big)\sqsubseteq_L\ $$\GAMMA$$\Big(\langle[c,d],p_{cd}\rangle\Big)$
 }
 
-$\because\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$, from our definition of $\sqsubseteq_M$ we have
+\noindent$\because\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$, from our definition of $\sqsubseteq_M$ we have
 \begin{flalign}
   &[a,b]\sqsubseteq_{int}[c,d]\qquad\qquad\text{and}\nonumber&&\\
   &p.m.f\big(\langle[a,b],p_{ab}\rangle\big)\geq p.m.f\big(\langle[c,d],p_{cd}\rangle\big)\label{eq:monotone1}&&
@@ -1452,89 +1431,83 @@ $\because\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$, fro
 \begin{align}
             &\quad[a,b]\sqsubseteq_{int}[c,d]&\nonumber\\
 \Rightarrow &\quad c\leq a\bigwedge b\leq d&[\text{using definition } \ref{eq:interval_def}]\nonumber\\
-\Rightarrow &\quad \big\{i\ |\ i\in[a,b]\big\}\subseteq\big\{i\ |\ i\in[c,d]\big\}\label{eq:monotone2}&
+\Rightarrow &\quad\{i\in\mathbb{Z}\ |\ a\leq i\leq b\}\subseteq\{i\in\mathbb{Z}\ |\ c\leq i\leq d\}\label{eq:monotone2}&
 \end{align}
-$\GAMMA$$\Big(\langle[a,b],p_{ab}\rangle\Big)=\Big\{\big\langle i, p.m.f\big(\langle[a,b],p_{ab}\rangle\big)\big\rangle\quad\big|\quad i\in[a,b]\Big\}=X\text{ (say)}\qquad$ and\\
-$\GAMMA$$\Big(\langle[c,d],p_{cd}\rangle\Big)=\Big\{\big\langle i, p.m.f\big(\langle[c,d],p_{cd}\rangle\big)\big\rangle\quad\big|\quad i\in[c,d]\Big\}=Y\text{ (say)}$
 
-\noindent From \ref{eq:monotone2} we get $\quad\big\{\mathbf{val}(t_x)\ |\ t_x\in X\big\}\subseteq\big\{\mathbf{val}(t_y)\ |\ t_y\in Y\big\}\quad$ and\\
-from \ref{eq:monotone1} we get $\quad\forall t_x\in X,\forall t_y\in Y\ \bigg(\Big(\mathbf{val}(t_x)=\mathbf{val}(t_y)\Big)\Rightarrow\Big(\mathbf{prob}(t_x)\geq\mathbf{prob}(t_y)\Big)\bigg)$
-
-$\therefore\ X\sqsubseteq_L Y\qquad\qquad[\text{from our definition of } \sqsubseteq_L]$.
-
-$\therefore$$\ \GAMMA$$\Big(\langle[a,b],p_{ab}\rangle\Big)\sqsubseteq_L\ $$\GAMMA$$\Big(\langle[c,d],p_{cd}\rangle\Big)$
+\noindent From \ref{eq:monotone1} and \ref{eq:monotone2} we get, $\qquad$$\GAMMA$$\Big(\langle[a,b],p_{ab}\rangle\Big)\sqsubseteq_L\ $$\GAMMA$$\Big(\langle[c,d],p_{cd}\rangle\Big)$ [from our definition of $\sqsubseteq_L$]
 
 \noindent This completes the proof that $\GAMMA$ is monotonic.
 
 \noindent\rule{10cm}{0.1pt}
 
-Now, suppose $A$ and $B$ are two elements in $L$, with $A\sqsubseteq_L B$ and $A,B\neq\{\ \}$. We show that
+\noindent We know,
+\begin{align*}
+\ALPHA\big(\langle S,p\rangle\big)= 
+  \begin{cases} 
+    \big\langle[\ ],\ 1\big\rangle=\perp_M        &        \langle S,p\rangle=\langle\phi,1\rangle=\perp_L\\
+    \bigg\langle\Big[\mathcal{V}_m\Big(\langle S,p\rangle\Big),\ \mathcal{V}_M\Big(\langle S,p\rangle\Big)\Big],\ \mathbf{min}\bigg(1,\ p\cdot\Big(\mathcal{V}_M\Big(\langle S,p\rangle\Big)-\mathcal{V}_m\Big(\langle S,p\rangle\Big)+1\Big)\bigg)\bigg\rangle        &        \text{otherwise}
+  \end{cases} 
+\end{align*}
+
+Now, suppose $\langle S_1,p_1\rangle$ and $\langle S_2,p_2\rangle$ are two elements in $L$, with $\langle S_1,p_1\rangle\sqsubseteq_L\langle S_2,p_2\rangle$ and $S_1\neq\phi$\footnote{If $\quad S_1=\phi$, we have $\langle S_1,p_1\rangle=\perp_L\sqsubseteq_L\langle S_2,p_2\rangle\ \Rightarrow\ $$\ALPHA$$\Big(\perp_L\Big)\sqsubseteq_M\ $$\ALPHA$$\Big(\langle S_2,p_2\rangle\Big),\quad[\ \because\ $$\ALPHA$$\Big(\perp_L\Big)=\langle[],1\rangle=\perp_M,\ $ the least element of $\mathcal{M}]$.}. We show that
 
 \centerline{
-  $\ALPHA$$\Big(A\Big)\sqsubseteq_M\ $$\ALPHA$$\Big(B\Big)$\footnote{It's a trivial case, if $\bot_L\sqsubseteq_L S, \forall S\in L\quad$ then $\ALPHA$$\Big(\bot_L\Big)=\bot_M\sqsubseteq_M\ $$\ALPHA$$\Big(S\Big)$ using definition \ref{eq:alpha}}
+  $\ALPHA$$\Big(\langle S_1,p_1\rangle\Big)\sqsubseteq_M\ $$\ALPHA$$\Big(\langle S_2,p_2\rangle\Big)$
 }
 
-$\because A\sqsubseteq_L B$, from the definition of $\sqsubseteq_L$ we have
+$\because\langle S_1,p_1\rangle\sqsubseteq_L\langle S_2,p_2\rangle$, from the definition of $\sqsubseteq_L$ we have
 \begin{flalign}
-  &\Big\{\mathbf{val}(t)\ \big|\ \forall t\in A\Big\}\subseteq\Big\{\mathbf{val}(t)\ \big|\ \forall t\in B\Big\}\label{eq:monotone3}&&\\
-  &\forall t_a\in A,\ \forall t_b\in B\quad\bigg(\Big(\mathbf{val}(t_a)=\mathbf{val}(t_b)\Big)\Rightarrow\Big(\mathbf{prob}(t_a)\geq\mathbf{prob}(t_b)\Big)\bigg)\label{eq:monotone4}&&
+  &S_1\subseteq S_2\label{eq:monotone3}&&\\
+  &p_1\geq p_2\label{eq:monotone4}&&
 \end{flalign}
 
-\noindent$\ALPHA$$\big(A\big) = \bigg\langle\Big[\mathbf{MIN_v}\big(A\big),\ \mathbf{MAX_v}\big(A\big)\Big],\ \mathbf{min}\bigg(1,\ \mathbf{MIN_p}\big(A\big)*\Big(\mathbf{MAX_v}\big(A\big)-\mathbf{MIN_v}\big(A\big)+1\Big)\bigg)\bigg\rangle\qquad$ and
+\noindent$\ALPHA$$\big(\langle S_1,p_1\rangle\big) = \bigg\langle\Big[\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big),\ \mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)\Big],\ \mathbf{min}\bigg(1,\ p_1\cdot\Big(\mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)-\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big)+1\Big)\bigg)\bigg\rangle\qquad$ and
 
-\noindent$\ALPHA$$\big(B\big) = \bigg\langle\Big[\mathbf{MIN_v}\big(B\big),\ \mathbf{MAX_v}\big(B\big)\Big],\ \mathbf{min}\bigg(1,\ \mathbf{MIN_p}\big(B\big)*\Big(\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1\Big)\bigg)\bigg\rangle$\\
+\noindent$\ALPHA$$\big(\langle S_2,p_2\rangle\big) = \bigg\langle\Big[\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big),\ \mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)\Big],\ \mathbf{min}\bigg(1,\ p_2\cdot\Big(\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1\Big)\bigg)\bigg\rangle$\\
 
-From \ref{eq:monotone3} we get
+\noindent From \ref{eq:monotone3} we get,
 \begin{flalign}
-&\quad\mathbf{MIN_v}\big(B\big)\leq\mathbf{MIN_v}\big(A\big)\ \bigwedge\ \mathbf{MAX_v}\big(A\big)\leq\mathbf{MAX_v}\big(B\big)&&\nonumber\\
-\Rightarrow&\quad[\mathbf{MIN_v}\big(A\big),\mathbf{MAX_v}\big(A\big)]\ \sqsubseteq_{int}\ [\mathbf{MIN_v}\big(B\big),\mathbf{MAX_v}\big(B\big)]\qquad\qquad\text{[using definition \ref{eq:interval_def}]}&&\label{eq:monotone5}
+&\quad\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)\leq\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big)\ \bigwedge\ \mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)\leq\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)&&\nonumber\\
+\Rightarrow&\quad\Big[\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big),\ \mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)\Big]\ \sqsubseteq_{int}\ \Big[\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big),\ \mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)\Big]\qquad\qquad\text{[using definition \ref{eq:interval_def}]}&&\label{eq:monotone5}
 \end{flalign}
 
-\noindent Let $t_a\in A$ and $t_b\in B$ such that $\quad\mathbf{prob}(t_a)=\mathbf{MIN_p}\big(A\big)\ \bigwedge\ \mathbf{val}(t_a)=\mathbf{val}(t_b)$. Two such tuples always exist because $A,B\neq\{\ \}$ and \ref{eq:monotone3} holds. So, From \ref{eq:monotone4} we get
+\noindent From \ref{eq:monotone5} we get,
   \begin{flalign}
-    &\quad\mathbf{prob}(t_a)\geq\mathbf{prob}(t_b)&&\nonumber\\
-    \Rightarrow&\quad\mathbf{MIN_p}\big(A\big)\geq\mathbf{prob}(t_b)\qquad\qquad\qquad[\because\mathbf{prob}(t_a)=\mathbf{MIN_p}\big(A\big)]&&\nonumber\\
-    \Rightarrow&\quad\mathbf{MIN_p}\big(A\big)\geq\mathbf{prob}(t_b)\geq\mathbf{MIN_p}\big(B\big)\qquad\qquad[\because\mathbf{MIN_p}\big(B\big) \text{ is the minimum probability among all tuples in } B]&&\nonumber\\
-    \Rightarrow&\quad\mathbf{MIN_p}\big(A\big)\geq\mathbf{MIN_p}\big(B\big)&&\label{eq:monotone6}
+    &\quad\mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)-\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big)+1\leq\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1&&\nonumber\\
+    \Rightarrow&\quad\displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)-\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big)+1}\geq\displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1}&&\label{eq:monotone6}
   \end{flalign}
-    
-\noindent From \ref{eq:monotone5} we have
-  \begin{flalign}
-    &\quad\Big(\mathbf{MAX_v}\big(A\big)-\mathbf{MIN_v}\big(A\big)+1\Big)\leq\Big(\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1\Big)&&\nonumber\\
-    \Rightarrow&\quad\displaystyle\frac{1}{\mathbf{MAX_v}\big(A\big)-\mathbf{MIN_v}\big(A\big)+1}\geq\frac{1}{\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1}&&\label{eq:monotone7}
-  \end{flalign}
+  
+\noindent$p.m.f\Big($$\ALPHA$$\big(\langle S_i,p_i\rangle\big)\Big) = \mathbf{min}\left(p_i,\displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S_i,p_i\rangle\Big)-\mathcal{V}_m\Big(\langle S_i,p_i\rangle\Big)+1}\right)\qquad\forall i\in\{1,2\}$
 
-Now, depending upon the value of $p.m.f\Big($$\ALPHA$$\big(A\big)\Big)$ and $p.m.f\Big($$\ALPHA$$\big(B\big)\Big)$ we have 4 different cases to consider.
+\noindent Now, depending upon the value of $p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)$ and $p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)$ we have 4 different cases to consider.
 
 \begin{description}
-  \item[Case 1 :] $p.m.f\Big($$\ALPHA$$\big(A\big)\Big)=\mathbf{MIN_p}\big(A\big)\qquad$ and $\qquad p.m.f\Big($$\ALPHA$$\big(B\big)\Big)=\mathbf{MIN_p}\big(B\big)$ \hfill \\
-    From \ref{eq:monotone6} it's obvious that $\qquad p.m.f\Big($$\ALPHA$$\big(A\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(B\big)\Big)$
+  \item[Case 1 :] $p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)=p_1\qquad$ and $\qquad p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)=p_2$ \hfill \\
+    From \ref{eq:monotone4} it's obvious that $\qquad p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)$
   
-  \item[Case 2 :] $p.m.f\Big($$\ALPHA$$\big(A\big)\Big)=\mathbf{MIN_p}\big(A\big)\qquad$ and $\qquad p.m.f\Big($$\ALPHA$$\big(B\big)\Big)=\displaystyle\frac{1}{\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1}$ \hfill \\
+  \item[Case 2 :] $p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)=p_1\qquad$ and $\qquad p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)=\displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1}$ \hfill \\
     
-    $\because\ p.m.f\Big($$\ALPHA$$\big(B\big)\Big)=\displaystyle\frac{1}{\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1}$
+    $\because\ p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)=\displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1}$
     \begin{flalign*}
-      \Rightarrow&\quad1\leq\mathbf{MIN_p}\big(B\big)*\Big(\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1\Big)&&\\
-      \Rightarrow&\quad\mathbf{MIN_p}\big(B\big)\geq\frac{1}{\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1}&&\\
-      \Rightarrow&\quad\mathbf{MIN_p}\big(A\big)\geq\frac{1}{\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1}\qquad\qquad[\text{From } \ref{eq:monotone6}]&&
+      \Rightarrow&\quad p_2\geq\frac{1}{\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1}&&\\
+      \Rightarrow&\quad p_1\geq\frac{1}{\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1}\qquad\qquad[\text{From } \ref{eq:monotone4}]&&
     \end{flalign*}
-  $\therefore\ p.m.f\Big($$\ALPHA$$\big(A\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(B\big)\Big)$
+  $\therefore\ p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)$
   
-  \item[Case 3 :] $p.m.f\Big($$\ALPHA$$\big(A\big)\Big)=\displaystyle\frac{1}{\mathbf{MAX_v}\big(A\big)-\mathbf{MIN_v}\big(A\big)+1}\qquad$ and $\qquad p.m.f\Big($$\ALPHA$$\big(B\big)\Big)=\mathbf{MIN_p}\big(B\big)$ \hfill \\
+  \item[Case 3 :] $p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)=\displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)-\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big)+1}\qquad$ and $\qquad p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)=p_2$ \hfill \\
   
-  $\because\ p.m.f\Big($$\ALPHA$$\big(B\big)\Big)=\mathbf{MIN_p}\big(B\big)$
+  $\because\ p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)=p_2$
     \begin{flalign*}
-      \Rightarrow&\quad1\geq\mathbf{MIN_p}\big(B\big)*\Big(\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1\Big)&&\\
-      \Rightarrow&\quad\mathbf{MIN_p}\big(B\big)\leq\frac{1}{\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1}&&\\
-      \Rightarrow&\quad\mathbf{MIN_p}\big(B\big)\leq\frac{1}{\mathbf{MAX_v}\big(A\big)-\mathbf{MIN_v}\big(A\big)+1}\qquad\qquad[\text{From } \ref{eq:monotone7}]&&
+      \Rightarrow&\quad\frac{1}{\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1}\geq p_2&&\\
+      \Rightarrow&\quad\frac{1}{\mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)-\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big)+1}\geq p_2\qquad\qquad[\text{From } \ref{eq:monotone6}]&&
     \end{flalign*}
-  $\therefore\ p.m.f\Big($$\ALPHA$$\big(A\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(B\big)\Big)$
+  $\therefore\ p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)$
   
-  \item[Case 4 :] $p.m.f\Big($$\ALPHA$$\big(A\big)\Big)=\displaystyle\frac{1}{\mathbf{MAX_v}\big(A\big)-\mathbf{MIN_v}\big(A\big)+1}\qquad$ and $\qquad p.m.f\Big($$\ALPHA$$\big(B\big)\Big)=\displaystyle\frac{1}{\mathbf{MAX_v}\big(B\big)-\mathbf{MIN_v}\big(B\big)+1}$ \hfill \\
-    From \ref{eq:monotone7} it's obvious that $\qquad p.m.f\Big($$\ALPHA$$\big(A\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(B\big)\Big)$
+  \item[Case 4 :] $p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)=\displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S_1,p_1\rangle\Big)-\mathcal{V}_m\Big(\langle S_1,p_1\rangle\Big)+1}\qquad$ and $\qquad p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)=\displaystyle\frac{1}{\mathcal{V}_M\Big(\langle S_2,p_2\rangle\Big)-\mathcal{V}_m\Big(\langle S_2,p_2\rangle\Big)+1}$ \hfill \\
+    From \ref{eq:monotone6} it's obvious that $\qquad p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)$
 \end{description}
 
-So, in all the 4 cases $\quad p.m.f\Big($$\ALPHA$$\big(A\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(B\big)\Big)$. This along with \ref{eq:monotone5} proves that $\ALPHA$$\Big(A\Big)\sqsubseteq_M\ $$\ALPHA$$\Big(B\Big)$.
+So, in all the 4 cases $\quad p.m.f\Big($$\ALPHA$$\big(\langle S_1,p_1\rangle\big)\Big)\geq p.m.f\Big($$\ALPHA$$\big(\langle S_2,p_2\rangle\big)\Big)$. This along with \ref{eq:monotone5} proves that $\ALPHA$$\Big(\langle S_1,p_1\rangle\Big)\sqsubseteq_M\ $$\ALPHA$$\Big(\langle S_2,p_2\rangle\Big)$.
 
 \noindent This completes the proof that $\ALPHA$ is monotonic.
 

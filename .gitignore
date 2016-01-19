@@ -6,5 +6,5 @@ code/src/dataflow/*.tab.*
 code/src/dataflow/lex.yy.*
 code/src/*.dot
 code/src/*.png
-code/src/main
+code/src/analyzer
 reference*.pdf

@@ -167,12 +167,15 @@ term      :   term
                             free(tmp);
                           }
             | factor      { build_parse_tree("term", NULL, 0, 1); };
-factor    :   POPEN       { build_parse_tree("POPEN", "(", 1, 0); }
+factor    :   POPEN       { build_parse_tree("POPEN", "(", 1, 0);
+                            is_negative_number = false;
+                          }
               expr
               PCLOSE      { build_parse_tree("PCLOSE", ")", 1, 0);
                             build_parse_tree("factor", NULL, 0, 3);
                           }
             | UNIARITHOP  { build_parse_tree("UNIARITHOP", yytext, 1, 0);
+                            is_negative_number = true;
                             build_abstract_syntax_tree("0", NUMBLOCK, 0, 0);
                             build_abstract_syntax_tree(yytext, ARITHOPBLOCK, 0, 0);
                           }
@@ -185,11 +188,14 @@ factor    :   POPEN       { build_parse_tree("POPEN", "(", 1, 0); }
                             free(tmp);
                           }
             | ID          { get_symbol_table_index(yytext);
+                            is_negative_number = false;
                             build_parse_tree("ID", yytext, 1, 0);
                             build_parse_tree("factor", NULL, 0, 1);
                             build_abstract_syntax_tree(yytext, IDBLOCK, 0, 0);
                           }
-            | NUM         { build_parse_tree("NUM", yytext, 1, 0);
+            | NUM         { constant_set = insert_into_constant_set(constant_set, is_negative_number ? 0 - atoi(yytext) : atoi(yytext));
+                            is_negative_number = false;
+                            build_parse_tree("NUM", yytext, 1, 0);
                             build_parse_tree("factor", NULL, 0, 1);
                             build_abstract_syntax_tree(yytext, NUMBLOCK, 0, 0);
                           };

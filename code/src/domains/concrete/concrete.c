@@ -1,8 +1,7 @@
 #include "concrete.h"
-#include "dataflow/parser.h"
 
-#define is_id_block(n) ((n->type == IDBLOCK || (n->type == LOGOPBLOCK && !atoi(n->token) && n->token[0] != '0')) ? true : false)
-#define limit(n) (n > MAXINT ? MAXINT : (n < MININT ? MININT : n))
+int N_iterations, first_program_point;
+bool is_solution_fixed;
 
 ConcreteState *init_concrete_state() {
   ConcreteState *state = (ConcreteState *) calloc(1, sizeof(ConcreteState));
@@ -11,7 +10,7 @@ ConcreteState *init_concrete_state() {
 }
 
 void free_concrete_state(ConcreteState *state) {
-  void _free(ConcreteValueSet *set) {
+  void _free(IntSet *set) {
     if (!set) return;
     _free(set->left);
     _free(set->right);
@@ -35,66 +34,14 @@ void free_concrete_state(ConcreteState *state) {
 }
 
 void insert_into_concrete_state_value_set(ConcreteState *state, int value) {
-  ConcreteValueSet *_avl_tree_insert(ConcreteValueSet *head, int value, bool *is_key_found) {
-    ConcreteValueSet *_rotate_right(ConcreteValueSet *y) {
-      ConcreteValueSet *x = y->left, *T2 = x->right;
-      x->right = y;
-      y->left = T2;
-      int y_left_height = y->left ? y->left->_height : 0, y_right_height = y->right ? y->right->_height : 0,
-          x_left_height = x->left ? x->left->_height : 0, x_right_height = x->right ? x->right->_height : 0;
-      y->_height = (y_left_height > y_right_height ? y_left_height : y_right_height) + 1;
-      x->_height = (x_left_height > x_right_height ? x_left_height : x_right_height) + 1;
-      return x;
-    }
-    ConcreteValueSet *_rotate_left(ConcreteValueSet *x) {
-      ConcreteValueSet *y = x->right, *T2 = y->left;
-      y->left = x;
-      x->right = T2;
-      int y_left_height = y->left ? y->left->_height : 0, y_right_height = y->right ? y->right->_height : 0,
-          x_left_height = x->left ? x->left->_height : 0, x_right_height = x->right ? x->right->_height : 0;
-      y->_height = (y_left_height > y_right_height ? y_left_height : y_right_height) + 1;
-      x->_height = (x_left_height > x_right_height ? x_left_height : x_right_height) + 1;
-      return y;
-    }
-    if (!head) {
-      ConcreteValueSet *new_node = (ConcreteValueSet *) calloc(1, sizeof(ConcreteValueSet));
-      new_node->value = value;
-      new_node->_height = 1;
-      return new_node;
-    }
-    if (value == head->value) {
-      *is_key_found = true;
-      return head;
-    }
-    else if (value < head->value) head->left  = _avl_tree_insert(head->left, value, is_key_found);
-    else head->right  = _avl_tree_insert(head->right, value, is_key_found);
-    if (*is_key_found) return head;
-    int head_left_height = head->left ? head->left->_height : 0,
-        head_right_height = head->right ? head->right->_height : 0,
-        balance = head ? (head_left_height - head_right_height) : 0;
-    head->_height = (head_left_height > head_right_height ? head_left_height : head_right_height) + 1;
-    
-    if (balance > 1 && head->left->value > value) return _rotate_right(head);
-    if (balance < -1 && head->right->value < value) return _rotate_left(head);
-    if (balance > 1 && head->left->value < value) {
-      head->left = _rotate_left(head->left);
-      return _rotate_right(head);
-    }
-    if (balance < -1 && head->right->value > value) {
-      head->right = _rotate_right(head->right);
-      return _rotate_left(head);
-    }
-    return head;
-  }
-
   if (state) {
     bool key_exists = false;
-    state->value_set = _avl_tree_insert(state->value_set, value, &key_exists);
+    state->value_set = avl_tree_insert(state->value_set, value, &key_exists);
     state->number_of_values += key_exists ? 0 : 1;
   }
 }
 
-int initialize_first_program_point(bool initialize_all_uninitialized_variables_with_all_values_from_the_range) {
+static int initialize_first_program_point(bool initialize_all_uninitialized_variables_with_all_values_from_the_range) {
   int i, j;
   empty_state_status = (bool *) calloc(N_lines + 1, sizeof(bool));
   data_flow_graph = (bool **) calloc(N_lines + 1, sizeof(bool *));  
@@ -123,31 +70,7 @@ int initialize_first_program_point(bool initialize_all_uninitialized_variables_w
   return i;
 }
 
-bool is_empty_program_point(int program_point) {
-  return !empty_state_status[program_point];
-}
-
-unsigned int get_number_of_unique_variables(Ast *node) {
-  bool visited[SYMBOL_TABLE_SIZE] = {false};
-  int _get_number_of_unique_variables(Ast *node) {
-    if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int index = get_symbol_table_index(node->token);
-        if (visited[index]) return 0;
-        visited[index] = true;
-        return 1;
-      }
-      return 0;
-    }
-    int i = node->number_of_children, count = 0;
-    while (i) count += _get_number_of_unique_variables(node->children[--i]);
-    return count;
-  }
-  
-  return _get_number_of_unique_variables(node);
-}
-
-int number_of_all_tuples_of_unique_variables(int program_point, Ast *node) {
+static int number_of_all_tuples_of_unique_variables(int program_point, Ast *node) {
   bool visited[SYMBOL_TABLE_SIZE] = {false};
   int _number_of_all_tuples_of_unique_variables(int program_point, Ast *node) {
     if (!node->number_of_children) {
@@ -155,7 +78,6 @@ int number_of_all_tuples_of_unique_variables(int program_point, Ast *node) {
         int index = get_symbol_table_index(node->token);
         if (visited[index]) return 1;
         visited[index] = true;
-        if (!symbol_table[index].concrete) symbol_table[index].concrete = calloc(N_lines + 1, sizeof(ConcreteState *));
         return symbol_table[index].concrete[program_point] ?
                (((ConcreteState *) symbol_table[index].concrete[program_point])->number_of_values ?
                ((ConcreteState *) symbol_table[index].concrete[program_point])->number_of_values : 0) :
@@ -171,10 +93,10 @@ int number_of_all_tuples_of_unique_variables(int program_point, Ast *node) {
   return _number_of_all_tuples_of_unique_variables(program_point, node);
 }
 
-void generate_all_possible_unique_tuples(int program_point, int **list, int N_tuples, int *tuple_count, Ast *node) {
+static void generate_all_possible_unique_tuples(int program_point, int **list, int N_tuples, int *tuple_count, Ast *node) {
   bool visited[SYMBOL_TABLE_SIZE] = {false};
   void _generate_all_possible_unique_tuples(int program_point, int **list, int N_tuples, int *tuple_count, Ast *node) {
-    void _bst_to_list(ConcreteValueSet *set, int **list, int j, int *i, int repeatition) {
+    void _bst_to_list(IntSet *set, int **list, int j, int *i, int repeatition) {
       if (!set) return;
       _bst_to_list(set->left, list, j, i, repeatition);
       int k;
@@ -193,7 +115,6 @@ void generate_all_possible_unique_tuples(int program_point, int **list, int N_tu
         for (j = 0; j < N_variables; ++j)
           if (symbol_table_indices[j] == index)
             break;
-        if (!symbol_table[index].concrete) symbol_table[index].concrete = calloc(N_lines + 1, sizeof(ConcreteState *));
         if (symbol_table[index].concrete[program_point]) {
           list[j] = (int *) calloc(N_tuples, sizeof(int));
           *tuple_count /= ((ConcreteState *) symbol_table[index].concrete[program_point])->number_of_values;
@@ -211,14 +132,14 @@ void generate_all_possible_unique_tuples(int program_point, int **list, int N_tu
   _generate_all_possible_unique_tuples(program_point, list, N_tuples, tuple_count, node);
 }
 
-void evaluate(Ast *node, int **list, int N_tuples, ConcreteState *state, int program_point) {
+void evaluate(Ast *node, int **list, int N_tuples, ConcreteState *state, int program_point, bool is_logical) {
   int stack[1024], top = 0;
   double probability = 1.0;
   void _postfix_traversal(Ast *node, int i, double *probability, bool visited[]) {
     if (!node->number_of_children) {
       if (is_id_block(node)) {
         int j, index = get_symbol_table_index(node->token);
-        if (!visited[index]) *probability *= ((ConcreteState *) symbol_table[index].concrete[program_point])->probability;
+        if (!visited[index] && !is_logical) *probability *= ((ConcreteState *) symbol_table[index].concrete[program_point])->probability;
         visited[index] = true;
         for (j = 0; j < N_variables; ++j)
           if (symbol_table_indices[j] == index)
@@ -226,7 +147,7 @@ void evaluate(Ast *node, int **list, int N_tuples, ConcreteState *state, int pro
         stack[top++] = list[j][i];
       }
       else
-        stack[top++] = limit(atoi(node->token));
+        stack[top++] = atoi(node->token);
       return;
     }
     int j;
@@ -236,51 +157,51 @@ void evaluate(Ast *node, int **list, int N_tuples, ConcreteState *state, int pro
     if (node->number_of_children == 2)
       operand1 = stack[--top];
     if (!strcmp(node->token, "+")) {
-      *probability *= PR_ADD;
-      result = limit(operand1 + operand2);
+      *probability *= PR_ARITH(PR_ADD);
+      result = operand1 + operand2;
     }
     else if (!strcmp(node->token, "-")) {
-      *probability *= PR_SUB;
-      result = limit(operand1 - operand2);
+      *probability *= PR_ARITH(PR_SUB);
+      result = operand1 - operand2;
     }
     else if (!strcmp(node->token, "*")) {
-      *probability *= PR_MUL;
-      result = limit(operand1 * operand2);
+      *probability *= PR_ARITH(PR_MUL);
+      result = operand1 * operand2;
     }
     else if (!strcmp(node->token, "/")) {
-      *probability *= PR_DIV;
-      result = limit(operand1 / operand2);
+      *probability *= PR_ARITH(PR_DIV);
+      result = operand1 / operand2;
     }
     else if (!strcmp(node->token, "%")) {
-      *probability *= PR_REM;
-      result = limit(operand1 % operand2);
+      *probability *= PR_ARITH(PR_REM);
+      result = operand1 % operand2;
     }
     else if (!strcmp(node->token, "==")) {
-      *probability *= PR_EQ;
+      *probability *= PR_BOOL(PR_EQ);
       result = operand1 == operand2 ? 1 : 0;
     }
     else if (!strcmp(node->token, "!=")) {
-      *probability *= PR_NEQ;
+      *probability *= PR_BOOL(PR_NEQ);
       result = operand1 != operand2 ? 1 : 0;
     }
     else if (!strcmp(node->token, ">=")) {
-      *probability *= PR_GEQ;
+      *probability *= PR_BOOL(PR_GEQ);
       result = operand1 >= operand2 ? 1 : 0;
     }
     else if (!strcmp(node->token, "<=")) {
-      *probability *= PR_LEQ;
+      *probability *= PR_BOOL(PR_LEQ);
       result = operand1 <= operand2 ? 1 : 0;
     }
     else if (!strcmp(node->token, ">")) {
-      *probability *= PR_GT;
+      *probability *= PR_BOOL(PR_GT);
       result = operand1 > operand2 ? 1 : 0;
     }
     else if (!strcmp(node->token, "<")) {
-      *probability *= PR_LT;
+      *probability *= PR_BOOL(PR_LT);
       result = operand1 < operand2 ? 1 : 0;
     }
     else if (!strcmp(node->token, "!")) {
-      *probability *= PR_NEG;
+      *probability *= PR_BOOL(PR_NEG);
       result = operand2 ? 0 : 1;
     }
     stack[top++] = result;
@@ -292,13 +213,13 @@ void evaluate(Ast *node, int **list, int N_tuples, ConcreteState *state, int pro
     probability = 1.0;
     bool visited[SYMBOL_TABLE_SIZE] = {false};
     _postfix_traversal(node, i, &probability, visited);
-    list[N_variables][i] = stack[--top];
+    list[N_variables][i] = limit(stack[--top]);
   }
   state->probability *= probability;
 }
 
 void copy_state(ConcreteState *src, ConcreteState *dest) {
-  void _traverse(ConcreteValueSet *set) {
+  void _traverse(IntSet *set) {
     if (!set) return;
     _traverse(set->left);
     insert_into_concrete_state_value_set(dest, set->value);
@@ -314,7 +235,7 @@ void copy_state(ConcreteState *src, ConcreteState *dest) {
   dest->is_top_element = src->is_top_element;
 }
 
-void evaluate_expression(Ast *node, int from_program_point) {
+static void evaluate_expression(Ast *node, int from_program_point) {
   Ast *evaluation_node = node;
   if (node->type == ASSIGNBLOCK)
     evaluation_node = node->children[1];
@@ -327,12 +248,12 @@ void evaluate_expression(Ast *node, int from_program_point) {
   int **all_possible_tuples = (int **) calloc(N_variables + 1, sizeof(int *)), N_tuples, N_tuples_copy, N_unique_variables, i, j;
   N_tuples = N_tuples_copy = number_of_all_tuples_of_unique_variables(from_program_point, evaluation_node);
   generate_all_possible_unique_tuples(from_program_point, all_possible_tuples, N_tuples, &N_tuples_copy, evaluation_node);
-  evaluate(evaluation_node, all_possible_tuples, N_tuples, (ConcreteState *) node->value, from_program_point);
+  evaluate(evaluation_node, all_possible_tuples, N_tuples, (ConcreteState *) node->value, from_program_point, node->type == ASSIGNBLOCK ? false : true);
   i = N_unique_variables = get_number_of_unique_variables(evaluation_node);
-  while (i--) ((ConcreteState *) node->value)->probability *= PR_RD;
+  while (i--) ((ConcreteState *) node->value)->probability *= PR_ARITH(PR_RD);
   ((ConcreteState *) node->value)->component_states = (ConcreteState **) calloc(N_variables, sizeof(ConcreteState *));
 
-  #ifdef DEBUG
+  #ifdef CONCRETE_DEBUG
   printf("\n....................... evaluation steps .......................\n");
   for (i = 0; i < N_variables; ++i) {
     if (all_possible_tuples[i]) {
@@ -358,15 +279,14 @@ void evaluate_expression(Ast *node, int from_program_point) {
     while (dest_index < N_variables && symbol_table_indices[++dest_index] != index);
     for (i = 0; i < N_variables; ++i) {
       ((ConcreteState *) node->value)->component_states[i] = init_concrete_state();
-      if (i != dest_index) {
+      if (i != dest_index)
         copy_state((ConcreteState *) symbol_table[symbol_table_indices[i]].concrete[from_program_point],
             ((ConcreteState *) node->value)->component_states[i]);
-      }
       else if (all_possible_tuples[N_variables]) {
         for (j = 0; j < N_tuples; ++j)
           insert_into_concrete_state_value_set(((ConcreteState *) node->value)->component_states[i],
             all_possible_tuples[N_variables][j]);
-        ((ConcreteState *) node->value)->component_states[i]->probability = PR_WR * ((ConcreteState *) node->value)->probability;
+        ((ConcreteState *) node->value)->component_states[i]->probability = PR_ARITH(PR_WR) * ((ConcreteState *) node->value)->probability;
       }
     }
   }
@@ -402,8 +322,8 @@ void evaluate_expression(Ast *node, int from_program_point) {
   free(all_possible_tuples);
 }
 
-void upper_bound(ConcreteState **state1, ConcreteState *state2) {
-  void _traverse(ConcreteState *state, ConcreteValueSet *set) {
+static void upper_bound(ConcreteState **state1, ConcreteState *state2) {
+  void _traverse(ConcreteState *state, IntSet *set) {
     if (!set) return;
     _traverse(state, set->left);
     insert_into_concrete_state_value_set(state, set->value);
@@ -426,7 +346,7 @@ void upper_bound(ConcreteState **state1, ConcreteState *state2) {
 }
 
 void print_concrete_state(ConcreteState *state) {
-  void _inorder_set_traversal(ConcreteValueSet *set) {
+  void _inorder_set_traversal(IntSet *set) {
     if (!set) return;
     _inorder_set_traversal(set->left);
     printf("%d ", set->value);
@@ -441,29 +361,29 @@ void print_concrete_state(ConcreteState *state) {
         printf("    %s=<{", symbol_table[symbol_table_indices[i]].id);
         _inorder_set_traversal(state->component_states[i]->value_set);
         if (state->component_states[i]->is_top_element)
-          printf("a∈ ℤ | m ≤ a ≤ M}, 1.0>");
+          printf("a∈ ℤ | m ≤ a ≤ M}, 1>");
         else
-          printf("%s, %.8lf>", state->component_states[i]->number_of_values ? "\b}" : "}", state->component_states[i]->probability);
+          printf("%s, %.12lg>", state->component_states[i]->number_of_values ? "\b}" : "}", state->component_states[i]->probability);
       }
     }
   }
   else {
     _inorder_set_traversal(state->value_set);
     if (state->is_top_element)
-      printf("a∈ ℤ | m ≤ a ≤ M}, 1.0>");
+      printf("a∈ ℤ | m ≤ a ≤ M}, 1>");
     else
-      printf("%s, %.8lf>", state->number_of_values ? "\b}" : "}", state->probability);
+      printf("%s, %.12lg>", state->number_of_values ? "\b}" : "}", state->probability);
   }
 }
 
 bool is_equal_sets(ConcreteState *state1, ConcreteState *state2) {
   if (!state1 && !state2) return true;
   if (!state1 || !state2) return false;
-  ConcreteValueSet *set1 = state1->value_set, *set2 = state2->value_set;
+  IntSet *set1 = state1->value_set, *set2 = state2->value_set;
   bool is_set1_subset = true, is_set2_subset = true;
 
-  void _is_subset(ConcreteValueSet *traverse_set, ConcreteValueSet *match_set, bool *found) {
-    bool _does_exists(int key, ConcreteValueSet *set) {
+  void _is_subset(IntSet *traverse_set, IntSet *match_set, bool *found) {
+    bool _does_exists(int key, IntSet *set) {
       if (!set) return false;
       if (set->value == key) return true;
       if (set->value > key) return _does_exists(key, set->left);
@@ -479,7 +399,7 @@ bool is_equal_sets(ConcreteState *state1, ConcreteState *state2) {
   return is_set1_subset & is_set2_subset;
 }
 
-bool iterate(int initial_program_point) {
+static bool iterate(int initial_program_point) {
 
   bool has_fixed_point_reached = true;
   void _iterate(bool iterate_exit_program_point) {
@@ -488,16 +408,16 @@ bool iterate(int initial_program_point) {
       bool is_first_eqn = true, program_point_is_fixed = true;
       ConcreteState *previous_state = NULL;
 
-      #ifdef DEBUG
+      #ifdef CONCRETE_DEBUG
       printf("\n==============================================================================\n");
       #endif
 
       for (j = 0; j <= N_lines; j++) {
         if (data_flow_graph[i][j]) {
 
-          #ifdef DEBUG
+          #ifdef CONCRETE_DEBUG
           char stmt[200] = {0};
-          printf("G_%d <- G_%d [ %s ] %s\n", i, j, expression_to_string(data_flow_matrix[i][j], stmt),
+          printf("G_%d <- G_%d [ %s ] %s\n", i ? i : N_lines + 1, j ? j : N_lines + 1, expression_to_string(data_flow_matrix[i][j], stmt),
             data_flow_matrix[i][j]->type == LOGOPBLOCK ? "logical" : (data_flow_matrix[i][j]->type == ASSIGNBLOCK ? "assignment" : ""));
           #endif
 
@@ -505,7 +425,7 @@ bool iterate(int initial_program_point) {
             is_first_eqn = false;
             evaluate_expression(data_flow_matrix[i][j], j);
 
-            #ifdef DEBUG
+            #ifdef CONCRETE_DEBUG
             printf("evaluated result :: \t");
             print_concrete_state((ConcreteState *) data_flow_matrix[i][j]->value);
             printf("\n");
@@ -517,7 +437,7 @@ bool iterate(int initial_program_point) {
           }
           evaluate_expression(data_flow_matrix[i][j], j);
 
-          #ifdef DEBUG
+          #ifdef CONCRETE_DEBUG
           printf("evaluated result ::\t");
           print_concrete_state((ConcreteState *) data_flow_matrix[i][j]->value);
           #endif
@@ -525,7 +445,7 @@ bool iterate(int initial_program_point) {
           upper_bound(&previous_state, (ConcreteState *) data_flow_matrix[i][j]->value);
           data_flow_matrix[i][j]->value = NULL;
 
-          #ifdef DEBUG
+          #ifdef CONCRETE_DEBUG
           printf("\nupper bound ::\t");
           print_concrete_state(previous_state);
           printf("\n");
@@ -535,12 +455,10 @@ bool iterate(int initial_program_point) {
       if (!is_first_eqn) {
         empty_state_status[i] = previous_state ? true : false;
         for (k = 0; k < N_variables; ++k) {
-          if (!symbol_table[symbol_table_indices[k]].concrete)
-            symbol_table[symbol_table_indices[k]].concrete = calloc(N_lines + 1, sizeof(ConcreteState *));
           bool is_fixed = is_equal_sets(symbol_table[symbol_table_indices[k]].concrete[i], previous_state ? previous_state->component_states[k] : NULL);
           program_point_is_fixed &= is_fixed;
           
-          #ifdef DEBUG
+          #ifdef CONCRETE_DEBUG
           printf("%s is %s\t", symbol_table[symbol_table_indices[k]].id, is_fixed ? "fixed" : "NOT fixed");
           #endif
 
@@ -552,8 +470,8 @@ bool iterate(int initial_program_point) {
             free_concrete_state(previous_state->component_states[k]);
         }
 
-        #ifdef DEBUG
-        printf("\nG_%d (%s) ::\t", i, program_point_is_fixed ? "fixed" : "NOT fixed");
+        #ifdef CONCRETE_DEBUG
+        printf("\nG_%d (%s) ::\t", i ? i : N_lines + 1, program_point_is_fixed ? "fixed" : "NOT fixed");
         for (k = 0; k < N_variables; ++k) {
           printf("  %s∈ <{", symbol_table[symbol_table_indices[k]].id);
           print_concrete_state(symbol_table[symbol_table_indices[k]].concrete[i]);
@@ -578,19 +496,33 @@ void concrete_analysis() {
     BE INITIALIZED in the begining.
   */
   int i = 0, initial_program_point = initialize_first_program_point(false);
+  bool is_fixed;
   
-  #ifdef DEBUG
-  printf("\t\t\t\titeration-1");
-  #endif
-  
-  while (!iterate(initial_program_point) && i < MAX_ITERATION) {
+  do {
     i += 1;
     
-    #ifdef DEBUG
-    printf("\t\t\t\titeration-%d", i+1);
+    #ifdef CONCRETE_DEBUG
+    printf("\t\t\t\titeration-%d", i);
     #endif
+
+    is_fixed = iterate(initial_program_point);
+  } while(!is_fixed && i < MAX_ITERATION);
+
+  is_solution_fixed = is_fixed;
+  N_iterations = i;
+  first_program_point = initial_program_point;
+
+  free(empty_state_status);
+  for (i = 0; i <= N_lines; i++)
+    free(data_flow_graph[i]);
+  free(data_flow_graph);
+}
+
+void print_concrete_analysis_result() {
   
-  }
+  int i;
+  if (is_solution_fixed) printf("Reached fixed point after %d iterations\n\n", N_iterations);
+  else printf("Fixed point is not reached within %d iterations\n\n", N_iterations);
 
   for (i = 1; i <= N_lines; i++) {
     if (data_flow_matrix[i]) {
@@ -598,75 +530,26 @@ void concrete_analysis() {
       int j;
       for (j = 0; j < N_variables; ++j) {
         printf("    %s=<{", symbol_table[symbol_table_indices[j]].id);
-        if (i == initial_program_point)
-          printf("a∈ ℤ | m ≤ a ≤ M}, 1.0>");
+        if (i == first_program_point)
+          printf("a∈ ℤ | m ≤ a ≤ M}, 1>");
         else if (symbol_table[symbol_table_indices[j]].concrete[i])
           print_concrete_state(symbol_table[symbol_table_indices[j]].concrete[i]);
         else
-          printf("}, 1.0>");
+          printf("}, 1>");
       }
       printf("\n");
     }
   }
   if (data_flow_matrix[0]) {
-    printf("G_exit  ::");
+    printf("G_%d  ::  ", N_lines + 1);
     int j;
     for (j = 0; j < N_variables; ++j) {
       printf("    %s=<{", symbol_table[symbol_table_indices[j]].id);
       if (symbol_table[symbol_table_indices[j]].concrete[0])
         print_concrete_state(symbol_table[symbol_table_indices[j]].concrete[0]);
       else
-        printf("}, 1.0>");
+        printf("}, 1>");
     }
     printf("\n");
   }
-
-  printf("\n\nIn the above result\tm = %d\t&\tM = %d\n", MININT, MAXINT);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void avl_to_dot_file(const char *file, ConcreteValueSet *head) {
-  FILE *dot_file = fopen(file, "wt");
-  void _traverse(ConcreteValueSet *node) {
-    if (!node) return;
-    fprintf(dot_file, "\t%ld [label=\"%d\", shape=\"circle\", fillcolor=\"#FFEFD5\"];\n",
-      (unsigned long) node, node->value);
-    fprintf(dot_file, "\t%ld -> %ld;\n", (unsigned long) node, node->left ? (unsigned long) node->left : (((unsigned long) node) * 1000));
-    fprintf(dot_file, "\t%ld -> %ld;\n", (unsigned long) node, node->right ? (unsigned long) node->right : (((unsigned long) node) * 10000));
-    if (!node->left)
-      fprintf(dot_file, "\t%ld [label=\"NULL\", shape=\"plaintext\", fillcolor=\"#FFEFD5\"];\n", ((unsigned long) node) * 1000);
-    if (!node->right)
-      fprintf(dot_file, "\t%ld [label=\"NULL\", shape=\"plaintext\", fillcolor=\"#FFEFD5\"];\n", ((unsigned long) node) * 10000);
-    _traverse(node->left);
-    _traverse(node->right);
-    return;
-  }
-
-  fprintf(dot_file, "digraph Concrete_Set {\n\n\trankdir=TB;\n\tnode [style=\"filled\"];\n\n");
-  _traverse(head);
-  fprintf(dot_file, "\n}");
-  fclose(dot_file);
-  return;
 }

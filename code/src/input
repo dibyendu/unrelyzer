@@ -1,18 +1,20 @@
 ////////////////    Template Input File    ////////////////
 
-//    1. only SINGLE LINE comments allowed
+//    1. only SINGLE LINE comment is allowed
 //    2. only WHILE loop with single clause
 //    3. only IF condition with single clause
 //    4. all variables MUST be initialized in the begining
+//    5. length of variable names MUST be atmost 10 characters
+//    6. each statement MUST start in a separate line
 
 ///////////////////////////////////////////////////////////
 
 
 /////////////////////    Block - 1    /////////////////////
 
-// x = 1;
-// while (x < 10)
-//   x = x + 3;
+// x = 0;
+// while (x<1000)
+//   x = x + 1;
 
 //////////////////////////////////////////////////////////
 
@@ -44,29 +46,31 @@
 
 /////////////////////    Block - 4    ////////////////////
 
-X = 0;
+// X = 0;
 
-X = -(90-7)+6/2+(-34);
+// X = -(90-7)+6/2+(-34);
 
 
-a=2;
+// a=2;
 
-while(X<10)
-  X=X+20;
+// while(X<10)
+//   X=X+20;
 
-if (a==2)
-  b = +7;
-else
-  b = -7;
-a=b;
+// if (a==2)
+//   b = +7;
+// else
+//   b = -7;
+// a=b;
 
 //////////////////////////////////////////////////////////
 
 /////////////////////    Block - 5    ////////////////////
 
-// X = 0;
-
 // X = -(90-7)+6/2+(-34);
+// a=10;
+// b=8;
+// c=4;
+// g=1;
 
 // if(a!= 9) {
 //   a= b;
@@ -81,5 +85,20 @@ a=b;
 //       b = a-c*g; 
 //   }
 // }
+
+//////////////////////////////////////////////////////////
+
+/////////////////////    Block - 6    /////////////////////
+
+a = 35;
+b = 14;
+t = 0;
+gcd = 0;
+while (b != 0) {
+    t = b;
+    b = a % b;
+    a = t;
+}
+gcd = a;
 
 //////////////////////////////////////////////////////////

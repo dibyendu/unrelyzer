@@ -184,7 +184,9 @@ void print_dataflow_equations() {
     }
   }
   first = 1;
-  printf("Gₑₓᵢₜ = ");
+  printf("G");
+  _print_subsscript(N_lines + 1);
+  printf(" = ");
   for (j = 1; j <= N_lines; j++) {
     if (data_flow_matrix[0][j]) {
       stmt[0] = 0;
