@@ -667,7 +667,9 @@ void print_abstract_analysis_result() {
         	char low[40], up[40];
         	sprintf(low, "%d", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->lower);
         	sprintf(up, "%d", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->upper);
-          printf("%s,%s], %.12lg>", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->lower == MININT ? "m" : low,
+          printf("%s,%s], %.12lg>", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->lower == MININT ? "m" :
+            ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->lower == MAXINT ? "M" : low,
+            ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->upper == MININT ? "m" : 
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->upper == MAXINT ? "M" : up,
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->probability);
         }
@@ -686,7 +688,9 @@ void print_abstract_analysis_result() {
       	char low[40], up[40];
         sprintf(low, "%d", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->lower);
         sprintf(up, "%d", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->upper);
-        printf("%s,%s], %.12lg>", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->lower == MININT ? "m" : low,
+        printf("%s,%s], %.12lg>", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->lower == MININT ? "m" :
+            ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->lower == MAXINT ? "M" : low,
+            ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->upper == MININT ? "m" : 
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->upper == MAXINT ? "M" : up,
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->probability);
       }

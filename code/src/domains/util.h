@@ -16,6 +16,6 @@
 #define MAX_ITERATION 20
 
 //#define CONCRETE_DEBUG
-//#define ABSTRACT_DEBUG
+#define ABSTRACT_DEBUG
 
 #endif
