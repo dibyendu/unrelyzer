@@ -7,4 +7,3 @@ code/src/dataflow/lex.yy.*
 code/src/*.dot
 code/src/*.png
 code/src/analyzer
-reference*.pdf

@@ -30,7 +30,6 @@ static int initialize_first_program_point() {
 }
 
 void free_abstract_state(AbstractState *state) {
-
   if (state) {
     if (state->component_states) {
       int i;
@@ -43,151 +42,8 @@ void free_abstract_state(AbstractState *state) {
   }
 }
 
-static int number_of_all_tuples_of_unique_variables(int program_point, Ast *node) {
-  bool visited[SYMBOL_TABLE_SIZE] = {false};
-  int _number_of_all_tuples_of_unique_variables(int program_point, Ast *node) {
-    if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int index = get_symbol_table_index(node->token);
-        if (visited[index]) return 1;
-        visited[index] = true;
-        return symbol_table[index].abstract[program_point] ?
-               (((AbstractState *) symbol_table[index].abstract[program_point])->is_empty_interval ?
-               0 : (((AbstractState *) symbol_table[index].abstract[program_point])->upper -
-               	((AbstractState *) symbol_table[index].abstract[program_point])->lower + 1)) :
-               0;
-      }
-      return 1;
-    }
-    int i = node->number_of_children, product = 1;
-    while (i) product *= _number_of_all_tuples_of_unique_variables(program_point, node->children[--i]);
-    return product;
-  }
-
-  return _number_of_all_tuples_of_unique_variables(program_point, node);
-}
-
-static void generate_all_possible_unique_tuples(int program_point, int **list, int N_tuples, Ast *node) {
-  bool visited[SYMBOL_TABLE_SIZE] = {false};
-  int tuple_count = N_tuples;
-  void _generate_all_possible_unique_tuples(int program_point, int **list, int N_tuples, Ast *node) {
-    if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int j, index = get_symbol_table_index(node->token);
-        if (visited[index]) return;
-        visited[index] = true;
-        for (j = 0; j < N_variables; ++j)
-          if (symbol_table_indices[j] == index)
-            break;
-        if (symbol_table[index].abstract[program_point]) {
-          list[j] = (int *) calloc(N_tuples, sizeof(int));
-          tuple_count /= ((AbstractState *) symbol_table[index].abstract[program_point])->upper -
-          				  ((AbstractState *) symbol_table[index].abstract[program_point])->lower + 1;
-          int idx = 0, i, k;
-          for (i = ((AbstractState *) symbol_table[index].abstract[program_point])->lower;
-          	   i <= ((AbstractState *) symbol_table[index].abstract[program_point])->upper; ++i) {
-          	for (k = 0; k < tuple_count; ++k) {
-        	  list[j][idx] = i;
-        	  idx += 1;
-      	  	}
-          }
-          for (i = idx, k = 0; i < N_tuples; i++, k = (k+1) % idx)
-            list[j][i] = list[j][k];
-        }
-      }
-    }
-    int i = node->number_of_children;
-    while (i) _generate_all_possible_unique_tuples(program_point, list, N_tuples, node->children[--i]);
-  }
-
-  _generate_all_possible_unique_tuples(program_point, list, N_tuples, node);
-}
-
-void evaluate_logical(Ast *node, int **list, int N_tuples, AbstractState *state, int program_point) {
-  int stack[1024], top = 0;
-  double probability = 1.0;
-  void _postfix_traversal(Ast *node, int i, double *probability) {
-    if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int j, index = get_symbol_table_index(node->token);
-        for (j = 0; j < N_variables; ++j)
-          if (symbol_table_indices[j] == index)
-            break;
-        stack[top++] = list[j][i];
-      }
-      else
-        stack[top++] = atoi(node->token);
-      return;
-    }
-    int j;
-    for (j = 0; j < node->number_of_children; ++j)
-      _postfix_traversal(node->children[j], i, probability);
-    int result = 0, operand1, operand2 = stack[--top];
-    if (node->number_of_children == 2)
-      operand1 = stack[--top];
-    if (!strcmp(node->token, "+")) {
-      *probability *= PR_ARITH(PR_ADD);
-      result = operand1 + operand2;
-    }
-    else if (!strcmp(node->token, "-")) {
-      *probability *= PR_ARITH(PR_SUB);
-      result = operand1 - operand2;
-    }
-    else if (!strcmp(node->token, "*")) {
-      *probability *= PR_ARITH(PR_MUL);
-      result = operand1 * operand2;
-    }
-    else if (!strcmp(node->token, "/")) {
-      *probability *= PR_ARITH(PR_DIV);
-      result = operand1 / operand2;
-    }
-    else if (!strcmp(node->token, "%")) {
-      *probability *= PR_ARITH(PR_REM);
-      result = operand1 % operand2;
-    }
-    else if (!strcmp(node->token, "==")) {
-      *probability *= PR_BOOL(PR_EQ);
-      result = operand1 == operand2 ? 1 : 0;
-    }
-    else if (!strcmp(node->token, "!=")) {
-      *probability *= PR_BOOL(PR_NEQ);
-      result = operand1 != operand2 ? 1 : 0;
-    }
-    else if (!strcmp(node->token, ">=")) {
-      *probability *= PR_BOOL(PR_GEQ);
-      result = operand1 >= operand2 ? 1 : 0;
-    }
-    else if (!strcmp(node->token, "<=")) {
-      *probability *= PR_BOOL(PR_LEQ);
-      result = operand1 <= operand2 ? 1 : 0;
-    }
-    else if (!strcmp(node->token, ">")) {
-      *probability *= PR_BOOL(PR_GT);
-      result = operand1 > operand2 ? 1 : 0;
-    }
-    else if (!strcmp(node->token, "<")) {
-      *probability *= PR_BOOL(PR_LT);
-      result = operand1 < operand2 ? 1 : 0;
-    }
-    else if (!strcmp(node->token, "!")) {
-      *probability *= PR_BOOL(PR_NEG);
-      result = operand2 ? 0 : 1;
-    }
-    stack[top++] = result;
-  }
-
-  int i;
-  list[N_variables] = (int *) calloc(N_tuples, sizeof(int));
-  for (i = 0; i < N_tuples; ++i) {
-    probability = 1.0;
-    _postfix_traversal(node, i, &probability);
-    list[N_variables][i] = stack[--top] ? 1 : 0;
-  }
-  state->probability *= probability;
-}
-
 static void evaluate_arithmatic(Ast *node, AbstractState *state, int program_point) {
-  int stack[1024], top = 0;
+  int stack[EVALUATION_STACK_SIZE], top = 0;
   double probability = 1.0;
   bool visited[SYMBOL_TABLE_SIZE] = {false}, is_empty_result = false;
 
@@ -270,6 +126,168 @@ static void evaluate_arithmatic(Ast *node, AbstractState *state, int program_poi
   state->is_empty_interval = is_empty_result;
 }
 
+void evaluate_logical(Ast *node, AbstractState *state, AbstractAllTuple *list, int N_list, bool *is_true) {
+  int stack[EVALUATION_STACK_SIZE], top = 0;
+  double probability = 1.0;
+  bool is_first_tuple = true;
+  void _postfix_traversal(Ast *node, double *probability) {
+    int j;
+    if (!node->number_of_children) {
+      if (is_id_block(node)) {
+        int index = get_symbol_table_index(node->token);
+        for (j = 0; j < N_list; ++j)
+          if (list[j].symbol_table_index == index)
+            break;
+        stack[top++] = list[j].min_value + list[j].current_index;
+      }
+      else
+        stack[top++] = atoi(node->token);
+      return;
+    }
+    for (j = 0; j < node->number_of_children; ++j)
+      _postfix_traversal(node->children[j], probability);
+    int result = 0, operand1, operand2 = stack[--top];
+    if (node->number_of_children == 2)
+      operand1 = stack[--top];
+    if (!strcmp(node->token, "+")) {
+      *probability *= PR_ARITH(PR_ADD);
+      result = operand1 + operand2;
+    }
+    else if (!strcmp(node->token, "-")) {
+      *probability *= PR_ARITH(PR_SUB);
+      result = operand1 - operand2;
+    }
+    else if (!strcmp(node->token, "*")) {
+      *probability *= PR_ARITH(PR_MUL);
+      result = operand1 * operand2;
+    }
+    else if (!strcmp(node->token, "/")) {
+      *probability *= PR_ARITH(PR_DIV);
+      result = operand1 / operand2;
+    }
+    else if (!strcmp(node->token, "%")) {
+      *probability *= PR_ARITH(PR_REM);
+      result = operand1 % operand2;
+    }
+    else if (!strcmp(node->token, "==")) {
+      *probability *= PR_BOOL(PR_EQ);
+      result = operand1 == operand2 ? 1 : 0;
+    }
+    else if (!strcmp(node->token, "!=")) {
+      *probability *= PR_BOOL(PR_NEQ);
+      result = operand1 != operand2 ? 1 : 0;
+    }
+    else if (!strcmp(node->token, ">=")) {
+      *probability *= PR_BOOL(PR_GEQ);
+      result = operand1 >= operand2 ? 1 : 0;
+    }
+    else if (!strcmp(node->token, "<=")) {
+      *probability *= PR_BOOL(PR_LEQ);
+      result = operand1 <= operand2 ? 1 : 0;
+    }
+    else if (!strcmp(node->token, ">")) {
+      *probability *= PR_BOOL(PR_GT);
+      result = operand1 > operand2 ? 1 : 0;
+    }
+    else if (!strcmp(node->token, "<")) {
+      *probability *= PR_BOOL(PR_LT);
+      result = operand1 < operand2 ? 1 : 0;
+    }
+    else if (!strcmp(node->token, "!")) {
+      *probability *= PR_BOOL(PR_NEG);
+      result = operand2 ? 0 : 1;
+    }
+    stack[top++] = result;
+  }
+
+  int j;
+
+  #ifdef ABSTRACT_DEBUG
+  printf("\n....................... evaluation steps (logical) .......................\n");
+  for (j = 0; j < N_list; ++j)
+    printf("%s%s, ", j == 0 ? "(" : "", symbol_table[list[j].symbol_table_index].id);
+  printf("Result%s  ::  ", j ? ")" : "");
+  #endif
+    
+  while (true) {
+    probability = 1.0;
+    _postfix_traversal(node, &probability);
+
+    #ifdef ABSTRACT_DEBUG
+    for (j = 0; j < N_list; ++j)
+      printf("%s%d,", j == 0 ? "(" : "", list[j].min_value + list[j].current_index);
+    printf("%d%s  ", limit(stack[top-1]), j ? ")" : "");
+    #endif
+
+    if (stack[--top]) {
+      *is_true = true;
+      for (j = 0; j < N_list; ++j) {
+        int value = list[j].min_value + list[j].current_index;
+        if (is_first_tuple) {
+          state->component_states[list[j].symbol_table_indices_list_index]->lower =
+          state->component_states[list[j].symbol_table_indices_list_index]->upper = value;
+        }
+        else {
+          if (state->component_states[list[j].symbol_table_indices_list_index]->lower > value)
+            state->component_states[list[j].symbol_table_indices_list_index]->lower = value;
+          if (state->component_states[list[j].symbol_table_indices_list_index]->upper < value)
+            state->component_states[list[j].symbol_table_indices_list_index]->upper = value;
+        }
+      }
+      is_first_tuple = false;
+    }
+
+    if (!N_list)
+      break;
+    j = N_list - 1;
+    list[j].current_index += 1;
+    while (j > 0 && list[j].current_index >= list[j].max_values) {
+      list[j].current_index = 0;
+      j--;
+      list[j].current_index += 1;
+    }
+    if (j == 0 && list[j].current_index >= list[j].max_values)
+      break;
+  }
+
+  state->probability *= probability;
+
+  #ifdef ABSTRACT_DEBUG
+  printf("\n..........................................................................\n");
+  #endif
+}
+
+static void populate_tuples_list(Ast *node, AbstractAllTuple *map, int program_point) {
+  bool visited[SYMBOL_TABLE_SIZE] = {false};
+  int index = 0, i;
+
+  void _traverse(Ast *node) {
+    if (!node->number_of_children) {
+      if (is_id_block(node)) {
+        int idx = get_symbol_table_index(node->token);
+        if (visited[idx]) return;
+        visited[idx] = true;
+        map[index].symbol_table_index = idx;
+        for (i = 0; i < N_variables; ++i) {
+          if (symbol_table_indices[i] == idx) {
+            map[index].symbol_table_indices_list_index = i;
+            break;
+          }
+        }
+        AbstractState *state = (AbstractState *) symbol_table[idx].abstract[program_point];
+        map[index].max_values = state ? (state->is_empty_interval ? 0 : state->upper - state->lower + 1) : 0;
+        map[index].min_value = state->lower;
+        index += 1;
+      }
+      return;
+    }
+    int i = node->number_of_children;
+    while (i) _traverse(node->children[--i]);
+  }
+  
+  _traverse(node);
+}
+
 static void evaluate_expression(Ast *node, int from_program_point) {
   Ast *evaluation_node = node;
   if (node->type == ASSIGNBLOCK)
@@ -279,81 +297,44 @@ static void evaluate_expression(Ast *node, int from_program_point) {
     node->value = NULL;
     return;
   }
+  int i, N_unique_variables = get_number_of_unique_variables(evaluation_node);
   node->value = calloc(1, sizeof(AbstractState));
   ((AbstractState *) node->value)->probability = 1.0;
   ((AbstractState *) node->value)->component_states = (AbstractState **) calloc(N_variables, sizeof(AbstractState *));
-
-  int i, N_unique_variables = get_number_of_unique_variables(evaluation_node);
+  for (i = 0; i < N_variables; ++i) ((AbstractState *) node->value)->component_states[i] = calloc(1, sizeof(AbstractState));
   for (i = N_unique_variables; i; i--) ((AbstractState *) node->value)->probability *= PR_ARITH(PR_RD);
 
   if (node->type == LOGOPBLOCK) {
-  	int **all_possible_tuples = (int **) calloc(N_variables + 1, sizeof(int *)), N_tuples, i, j;
-  	N_tuples = number_of_all_tuples_of_unique_variables(from_program_point, evaluation_node);
-  	generate_all_possible_unique_tuples(from_program_point, all_possible_tuples, N_tuples, evaluation_node);
-  	evaluate_logical(evaluation_node, all_possible_tuples, N_tuples, (AbstractState *) node->value, from_program_point);
-
-  	#ifdef ABSTRACT_DEBUG
-  	printf("\n....................... evaluation steps (logical) .......................\n");
-  	for (i = 0; i < N_variables; ++i) {
-      if (all_possible_tuples[i]) {
-        printf("%s : [", symbol_table[symbol_table_indices[i]].id);
-        for (j = 0; j < N_tuples; ++j)
-          printf("%d  ", all_possible_tuples[i][j]);
-        printf("\b\b]\n");
-      }
-    }
-    if (all_possible_tuples[N_variables]) {
-      printf("result : [");
-      for (j = 0; j < N_tuples; ++j)
-        printf("%d  ", all_possible_tuples[N_variables][j]);
-      printf("\b\b]\n");
-    }
-    printf("..........................................................................\n");
-    #endif
-
     bool is_true = false;
+    AbstractAllTuple *tuples = (AbstractAllTuple *) calloc(N_unique_variables, sizeof(AbstractAllTuple));
+    populate_tuples_list(evaluation_node, tuples, from_program_point);
+
+    evaluate_logical(evaluation_node, (AbstractState *) node->value, tuples, N_unique_variables, &is_true);
+
+    bool *no_need_to_be_copied = (bool *) calloc(N_variables, sizeof(bool));
+    for (i = 0; i < N_unique_variables; ++i)
+      no_need_to_be_copied[tuples[i].symbol_table_indices_list_index] = true;
     for (i = 0; i < N_variables; ++i) {
-      ((AbstractState *) node->value)->component_states[i] = calloc(1, sizeof(AbstractState));
-      if (all_possible_tuples[i]) {
-      	bool is_first_value = true;
-      	AbstractState *src = (AbstractState *) symbol_table[symbol_table_indices[i]].abstract[from_program_point];
+      AbstractState *src = (AbstractState *) symbol_table[symbol_table_indices[i]].abstract[from_program_point];
+      if (no_need_to_be_copied[i]) {
       	((AbstractState *) node->value)->component_states[i]->probability =
       	src->probability * ((AbstractState *) node->value)->probability / (src->upper - src->lower + 1);
-        for (j = 0; j < N_tuples; ++j) {
-          if (all_possible_tuples[N_variables][j]) {
-            is_true = true;
-           	if (is_first_value) {
-           	  is_first_value = false;
-           	  ((AbstractState *) node->value)->component_states[i]->lower = 
-           	  ((AbstractState *) node->value)->component_states[i]->upper = all_possible_tuples[i][j];
-           	}
-           	if (((AbstractState *) node->value)->component_states[i]->lower > all_possible_tuples[i][j])
-           	  ((AbstractState *) node->value)->component_states[i]->lower = all_possible_tuples[i][j];
-            if (((AbstractState *) node->value)->component_states[i]->upper < all_possible_tuples[i][j])
-           	  ((AbstractState *) node->value)->component_states[i]->upper = all_possible_tuples[i][j];
-          }
-        }
         ((AbstractState *) node->value)->component_states[i]->probability *=
         ((AbstractState *) node->value)->component_states[i]->upper - ((AbstractState *) node->value)->component_states[i]->lower + 1;
         ((AbstractState *) node->value)->component_states[i]->probability =
         ((AbstractState *) node->value)->component_states[i]->probability > 1 ? 1 : ((AbstractState *) node->value)->component_states[i]->probability;
       }
       else {
-      	AbstractState *src = (AbstractState *) symbol_table[symbol_table_indices[i]].abstract[from_program_point];
         ((AbstractState *) node->value)->component_states[i]->lower = src->lower;
         ((AbstractState *) node->value)->component_states[i]->upper = src->upper;
         ((AbstractState *) node->value)->component_states[i]->probability = src->probability * ((AbstractState *) node->value)->probability;
         ((AbstractState *) node->value)->component_states[i]->is_empty_interval = src->is_empty_interval;
       }
     }
-    if (!N_unique_variables) is_true = (bool) all_possible_tuples[N_variables][0];
     if (!is_true)
       for (i = 0; i < N_variables; ++i)
       	((AbstractState *) node->value)->component_states[i]->is_empty_interval = true;
-    for (i = 0; i <= N_variables; ++i)
-      if (all_possible_tuples[i])
-        free(all_possible_tuples[i]);
-  	free(all_possible_tuples);
+    free(tuples);
   }
   else if (node->type == ASSIGNBLOCK) {
   	evaluate_arithmatic(evaluation_node, (AbstractState *) node->value, from_program_point);
@@ -367,7 +348,6 @@ static void evaluate_expression(Ast *node, int from_program_point) {
     int i, dest_index = -1, index = get_symbol_table_index(node->children[0]->token);
     while (dest_index < N_variables && symbol_table_indices[++dest_index] != index);
     for (i = 0; i < N_variables; ++i) {
-      ((AbstractState *) node->value)->component_states[i] = calloc(1, sizeof(AbstractState));
       if (i != dest_index) {
       	AbstractState *src = (AbstractState *) symbol_table[symbol_table_indices[i]].abstract[from_program_point];
         ((AbstractState *) node->value)->component_states[i]->lower = src->lower;

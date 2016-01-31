@@ -5,6 +5,8 @@
 #include "../dataflow/parser.h"
 #include "../hardware_specification.h"
 
+#define EVALUATION_STACK_SIZE 1024
+
 #define MININT  SHRT_MIN
 #define MAXINT  SHRT_MAX
 
@@ -16,6 +18,6 @@
 #define MAX_ITERATION 20
 
 //#define CONCRETE_DEBUG
-#define ABSTRACT_DEBUG
+//#define ABSTRACT_DEBUG
 
 #endif

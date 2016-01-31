@@ -58,6 +58,24 @@ void generate_dataflow_equations() {
   return;
 }
 
+void free_dataflow_equations() { 
+  int i, j;
+  for (i = 0; i <= N_lines; ++i)
+    if (data_flow_matrix[i]) {
+      for (j = 0; j <= N_lines; ++j)
+        if (data_flow_matrix[i][j] && data_flow_matrix[i][j]->_is_dataflow_node) {
+          if (data_flow_matrix[i][j]->token[0]) free(data_flow_matrix[i][j]->token);
+          if (data_flow_matrix[i][j]->children) free(data_flow_matrix[i][j]->children);
+          if (data_flow_matrix[i][j]->value) free(data_flow_matrix[i][j]->value);
+          free(data_flow_matrix[i][j]);
+        }
+      free(data_flow_matrix[i]);
+    }
+  free(data_flow_matrix);
+  free_ast(ast);
+  free_symbol_table();
+}
+
 Ast *invert_expression(Ast *node) {
 
   void copy_children(Ast *new_node, Ast *old_node) {
@@ -79,6 +97,7 @@ Ast *invert_expression(Ast *node) {
 
   Ast *new_node = (Ast *) calloc(1, sizeof(Ast));
   new_node->type = LOGOPBLOCK;
+  new_node->_is_dataflow_node = true;
   if (node->number_of_children == 1) {
     if (node->token[0] == '!') {
       new_node->token = (char *) calloc(strlen(node->children[0]->token) + 1, sizeof(char));
