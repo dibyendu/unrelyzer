@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
   if (arg_ast) generate_dot_file("ast.dot", AST);
   if (arg_cfg) generate_dot_file("cfg.dot", CFG);
   
+  // data_flow_matrix[N_lines+1][N_lines+1];
   generate_dataflow_equations();  
   print_dataflow_equations();
 
@@ -51,12 +52,7 @@ int main(int argc, char **argv) {
   printf("---------------------- Result of Abstract Analysis (%ld clock ticks) ----------------------\n", abstract_t);
   print_abstract_analysis_result();  
 
-  /*
-    data_flow_matrix[N_lines+1][N_lines+1];
-    free(data_flow_matrix);
-  */
+  free_dataflow_equations();
 
-  free(symbol_table);
-  free_constant_set(constant_set);
   return 0;
 }

@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include "../util.h"
 
+typedef struct AbstractAllTupleT {
+  int symbol_table_index, symbol_table_indices_list_index, current_index, max_values, min_value;
+} AbstractAllTuple;
+
 typedef struct AbstractStateT {
   int lower, upper;
   bool is_empty_interval;

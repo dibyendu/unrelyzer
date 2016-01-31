@@ -52,6 +52,7 @@ typedef struct AstT {
   int number_of_children, line_number;
   struct AstT **children;
   void *value;
+  bool _is_dataflow_node;
 } Ast;
 
 typedef struct CfgT {

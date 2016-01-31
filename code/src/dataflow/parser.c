@@ -122,6 +122,28 @@ void free_parse_tree(ParseTree *head) {
   free_node(head);
 }
 
+void free_symbol_table() {
+  int i;
+  for (i = 0; i < N_variables; ++i) {
+    free(symbol_table[symbol_table_indices[i]].id);
+    free(symbol_table[symbol_table_indices[i]].concrete);
+    free(symbol_table[symbol_table_indices[i]].abstract);
+  }
+  free(symbol_table);
+  free(symbol_table_indices);
+  free_constant_set(constant_set);
+}
+
+void free_ast(Ast *node) {
+  if (!node) return;
+  int i = node->number_of_children;
+  while (i) free_ast(node->children[--i]);
+  if (node->token[0]) free(node->token);
+  if (node->children) free(node->children);
+  if (node->value) free(node->value);
+  free(node);
+}
+
 /*
  * A tree like structure formed in a bottom up manner
  * where the root node contains the start symbol.

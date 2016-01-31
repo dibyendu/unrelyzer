@@ -69,6 +69,7 @@
 }
 
 \titleformat*{\section}{\Large}
+\titleformat*{\subsection}{\large}
 \newcommand{\ALPHA}{\large\boldsymbol{\alpha}\normalsize}
 \newcommand{\GAMMA}{\large\boldsymbol{\gamma}\normalsize}
 \DefineVerbatimEnvironment{snippet}{Verbatim}{
@@ -591,7 +592,83 @@ The '$\bullet$' indicates, repetition of value from previous iteration. The over
 \noindent$\bigg(\Big\langle[\mathtt{MININT},\leq\mathtt{MAXINT}],\ 1\Big\rangle,\ \Big\langle[0,12],\ 1\Big\rangle,\ \Big\langle[0,9],\ 0.9998500065\Big\rangle,\ \Big\langle[10,12],\ 0.23073461688\Big\rangle\bigg)$
 
 In general, we may need infinite number of iterations to converge. This is because the height of the lattice $M$ is $\infty$. But for practical purpose we stop iterating as soon as the intervals are fixed.
+
+\section{Fixpoint Approximation with Convergence Acceleration by Widening}
  
+\noindent Let's consider the following code segment.
+
+\begin{lstlisting}[mathescape]
+x $=_\bullet$ 0
+while (x $<_\bullet$ 1000)
+    x $=_\bullet$ x $+_\bullet$ 1
+\end{lstlisting}
+
+\noindent Probabilistic interval analysis will need around 1000 iterations to converge to interval $[1000, 1000]$ for $x$ at the end of the program.
+This seems too slow. To reduce the number of iterations to reach a fixed point, we rely on a technique called \textit{widening}. The technique of widening basically refers to methods for accelerating the convergence of fixed point iterations.
+
+Let's first look at the formal definition of the widening operator.
+
+\noindent A widening operator $\nabla: M\times M\mapsto M$ is such that,
+
+\begin{description}
+  \item[Correctness :] \hfill
+	\begin{itemize}
+	  \item $\forall x,y\in M,\quad$$\GAMMA$$(x)\ \sqsubseteq_M\ $$\GAMMA$$(x\nabla y)$
+	  \item $\forall x,y\in M,\quad$$\GAMMA$$(y)\ \sqsubseteq_M\ $$\GAMMA$$(x\nabla y)$
+	\end{itemize}
+  \item[Convergence :] \hfill
+	\begin{itemize}
+	  \item For all increasing chains $x^0\sqsubseteq_M x^1\sqsubseteq_M\ldots\ $, the increasing chain defined by\\
+	  $y^0=x^0,\ \ldots\ ,y^{i+1}=y^i\nabla x^{i+1},\ \ldots\ $ is not strictly increasing.
+	\end{itemize}
+\end{description}
+
+\subsection{Fixpoint approximation with widening}
+
+For every \textit{collecting semantics} in abstract domain, $g^\#_j$, we write $(g^\#_j)^i$ to represent its value after $i^{th}$ iteration.
+
+Following this notation, the upward iteration sequence with widening\cite{cousot05}:
+
+$(g^\#_j)^0=\bot_M$
+
+$(g^\#_j)^{i+1} =
+  \begin{cases}
+    (g^\#_j)^i       & \quad \text{if } sp^\#\Big((g^\#_j)^i\Big)\sqsubseteq_M (g^\#_j)^i\\
+    (g^\#_j)^i\nabla sp^\#\Big((g^\#_j)^i\Big)  & \quad \text{otherwise}\\
+  \end{cases}
+$\\
+
+is ultimately stationary and its limit $\hat{A}$ is a sound upper approximation of \ lfp$^{^{\bot_M}}sp^\#\quad$ i.e $\quad$ lfp$^{^{\bot_M}}sp^\#\sqsubseteq_M\ \hat{A}$.
+
+\subsection{Interval Widening with threshold set}
+
+There are several possible schemes for implementing widening operation. We shall outline one such method as follows.
+
+A \textbf{threshold set $T$} is a finite set of numbers (including $\mathrm{MININT}$ and $\mathrm{MAXINT}$),
+
+For a given program, we identify the set of constants used. Let this
+be the set $C$. We are restricting ourselves to programs with integer variables only. Now our threshold set $\quad T=C\bigcup\ \left\{\mathrm{MININT},\  \mathrm{MAXINT}\right\}$.
+
+Given two elements $\langle[a,b], p\rangle$ and $\langle[a',b'], p'\rangle$ in $M$, $\forall X\in M$, we define the widening with threshold operator $\nabla_T$ as follows:
+\begin{subequations}
+  \begin{align}
+    X\ \nabla_T\ \bot_M&=X\\
+    \bot_M\ \nabla_T\ X&=X\\
+    \langle[a,b], p\rangle\ \nabla_T\ \langle[a',b'], p'\rangle&=
+    \begin{cases}
+      \langle[a,b], p\rangle\qquad\text{if } \langle[a',b'], p'\rangle\ \sqsubseteq_M\ \langle[a,b], p\rangle\\
+      \langle[x,y], p_{xy}\rangle\qquad\text{otherwise}
+    \end{cases}
+  \end{align}
+\end{subequations}
+
+where,
+
+$x=\mathbf{max}\{l\in T\ |\ l\leq a'\}$,
+
+$y=\mathbf{min}\{h\in T\ |\ h\geq b'\}$ and
+
+$\displaystyle p_{xy}=(y-x+1)\cdot\mathbf{min}\left(\mathbf{max}\left(p.m.f\Big(\langle[a,b],p\rangle\Big),\ p.m.f\Big(\langle[a',b'],p'\rangle\Big)\right),\ \frac{1}{y-x+1}\right)$
 
 
 
@@ -694,233 +771,183 @@ We omit the similar proof for greatest lower bound for the sake of brevity.
 \section{\\Hasse Diagram of the Probabilistic Concrete Lattice $(L,\sqsubseteq_L)$}
 \label{app:concrete_hasse}
 
-The lattice $(L,\sqsubseteq_L)$ is best viewed in 3 dimensions. In the following few pages we've given several different (cross sectional) views of the same lattice.
+The lattice $(L,\sqsubseteq_L)$ is best viewed in 3 dimensions. In the following few pages we've given several different views of the same lattice.
 
-In all the following diagrams, \underline{\textbf{directed solid lines}} represent $g.l.b\to l.u.b$ relationship i.e the element at the arrow head is the least upper bound of the element at the arrow base and vice versa. There doesn't exist any other element between the connecting elements. Whereas \underline{\textbf{directed dashed lines}} represent the existence of infinite number of elements. Probability of exactly one tuple decreases monotonically along any dashed edge.
+In all the following diagrams, \underline{\textbf{directed solid lines}} represent $g.l.b\to l.u.b$ relationship i.e the element at the arrow head is the least upper bound of the element at the arrow base and vice versa. There doesn't exist any other element between the connecting elements. Whereas \underline{\textbf{directed dashed lines}} represent the existence of infinite number of elements. Only probability decreases monotonically (keeping the set of values same) along any dashed edge.
 
-In all the following diagrams :
-\begin{itemize}
-  \item $m=\mathtt{MININT}$
-  \item $M=\mathtt{MAXINT}$
-  \item $R=M-m$
-  \item $a_1,a_2,a_3$ are placeholders.
-\end{itemize}
-
-  \psset{arrowscale=1.5, ArrowInside=->}
-  \pstree[levelsep=40pt, nodesep=4pt]{\Tr{$\big\{\langle a_1,1\rangle\big\}$}}{
-  	\psset{linestyle=dashed}
-  	\Tr{$\big\{\langle a_1,0\rangle\big\}$}
-  }\hfill
-  \pstree[levelsep=40pt, nodesep=4pt]{\Tr{$\big\{\langle a_1,1\rangle,\langle a_2,1\rangle\big\}$}}{
-  	\psset{linestyle=dashed}
-  	\Tr[name=2R2C1]{$\big\{\langle a_1,1\rangle,\langle a_2,0\rangle\big\}$}
-  	\pstree{\psset{linestyle=none,ArrowInside=-}\Tr{}}{
-  	  \psset{linestyle=none,ArrowInside=-}
-  	  \Tr[name=2R3C1]{$\big\{\langle a_1,0\rangle,\langle a_2,0\rangle\big\}$}
-  	}
-  	\Tr[name=2R2C2]{$\big\{\langle a_1,0\rangle,\langle a_2,1\rangle\big\}$}
-  }
-  \ncline[linestyle=dashed, nodesep=4pt]{2R2C1}{2R3C1}
-  \ncline[linestyle=dashed, nodesep=4pt]{2R2C2}{2R3C1}
-\centerline{
-  \pstree[levelsep=40pt, nodesep=4pt]{\Tr{$\big\{\langle a_1,1\rangle,\langle a_2,1\rangle,\langle a_3,1\rangle\big\}$}}{
-  	\psset{linestyle=dashed}
-  	\pstree{\Tr[name=3R2C1]{$\big\{\langle a_1,1\rangle,\langle a_2,1\rangle,\langle a_3,0\rangle\big\}$}}{
-  	  \Tr[name=3R3C1]{$\big\{\langle a_1,1\rangle,\langle a_2,0\rangle,\langle a_3,0\rangle\big\}$}
-  	}
-  	\pstree{\Tr[name=3R2C2]{$\big\{\langle a_1,1\rangle,\langle a_2,0\rangle,\langle a_3,1\rangle\big\}$}}{
-  	  \pstree{\psset{linestyle=none,ArrowInside=-}\Tr[name=3R3C2]{$\big\{\langle a_1,0\rangle,\langle a_2,1\rangle,\langle a_3,0\rangle\big\}$}}{
-  	    \pstree{\Tr[name=3R4C1]{$\big\{\langle a_1,0\rangle,\langle a_2,0\rangle,\langle a_3,0\rangle\big\}$}}{
-  	      \pstree{\psset{linestyle=none,ArrowInside=-}\Tr{$\vdots$}}{
-  	      }
-  	    }
-  	  }
-  	}
-  	\pstree{\Tr[name=3R2C3]{$\big\{\langle a_1,0\rangle,\langle a_2,1\rangle,\langle a_3,1\rangle\big\}$}}{
-  	  \Tr[name=3R3C3]{$\big\{\langle a_1,0\rangle,\langle a_2,0\rangle,\langle a_3,1\rangle\big\}$}
-  	}
-  }
-  \ncline[linestyle=dashed, nodesep=4pt]{3R2C1}{3R3C2}
-  \ncline[linestyle=dashed, nodesep=4pt]{3R2C2}{3R3C1}
-  \ncline[linestyle=dashed, nodesep=4pt]{3R2C2}{3R3C3}
-  \ncline[linestyle=dashed, nodesep=4pt]{3R2C3}{3R3C2}
-  \ncline[linestyle=dashed, nodesep=4pt]{3R3C1}{3R4C1}
-  \ncline[linestyle=dashed, nodesep=4pt]{3R3C3}{3R4C1}
-}
-
-\centerline{\underline{\Large{Top View (Cross Sectional)}}\footnote{For brevity we've shown only for elements with $1,2\ \&\ 3$ tuples.}}
-
-\newpage
-\begin{tikzpicture}[scale=0.45, every node/.style={font=\small}]
-\newcommand\XRoot{10}
-\newcommand\YRoot{10}
-\node (Atop) at (\XRoot,\YRoot) {$\big\{\langle m,1\rangle,\langle m+1,1\rangle\ \cdots\ \langle 0,1\rangle\ \cdots\ \langle M-1,1\rangle,\langle M,1\rangle\big\}$};
-\node (A11) at (\XRoot-10,\YRoot-2) {$\big\{\langle m,1\rangle,\langle m+1,1\rangle\ \cdots\ \langle 0,1\rangle\ \cdots\ \langle M-1,1\rangle\big\}$};
-\node (A12) at (\XRoot-2,\YRoot-2) {$\qquad\cdots\qquad$};
-\node (A13) at (\XRoot,\YRoot-2) {$R+1$};
-\node (A14) at (\XRoot+2,\YRoot-2) {$\qquad\cdots\qquad$};
-\node (A15) at (\XRoot+10,\YRoot-2) {$\big\{\langle m+1,1\rangle\ \cdots\ \langle 0,1\rangle\ \cdots\ \langle M-1,1\rangle,\langle M,1\rangle\big\}$};
-\node (A41) at (\XRoot-14,\YRoot-9) {$\big\{\langle m,1\rangle,\langle m+1,1\rangle\big\}$};
-\node (A42) at (\XRoot-10,\YRoot-9) {$\cdots$};
-\node (A43) at (\XRoot-6,\YRoot-9) {$\big\{\langle -1,1\rangle,\langle 0,1\rangle\big\}$};
-\node (A44) at (\XRoot,\YRoot-9) {$\big\{\langle -1,1\rangle,\langle 1,1\rangle\big\}$};
-\node (A45) at (\XRoot+6,\YRoot-9) {$\big\{\langle 0,1\rangle,\langle 1,1\rangle\big\}$};
-\node (A46) at (\XRoot+10,\YRoot-9) {$\cdots$};
-\node (A47) at (\XRoot+14,\YRoot-9) {$\big\{\langle M-1,1\rangle,\langle M,1\rangle\big\}$};
-\node (A51) at (\XRoot-14,\YRoot-12) {$\big\{\langle m,1\rangle\big\}$};
-\node (A52) at (\XRoot-10,\YRoot-12) {$\big\{\langle m+1,1\rangle\big\}$};
-\node (A53) at (\XRoot-6,\YRoot-12) {$\cdots$};
-\node (A54) at (\XRoot-3,\YRoot-12) {$\big\{\langle -1,1\rangle\big\}$};
-\node (A55) at (\XRoot,\YRoot-12) {$\big\{\langle 0,1\rangle\big\}$};
-\node (A56) at (\XRoot+3,\YRoot-12) {$\big\{\langle 1,1\rangle\big\}$};
-\node (A57) at (\XRoot+6,\YRoot-12) {$\cdots$};
-\node (A58) at (\XRoot+10,\YRoot-12) {$\big\{\langle M-1,1\rangle\big\}$};
-\node (A59) at (\XRoot+14,\YRoot-12) {$\big\{\langle M,1\rangle\big\}$};
-\node (Abot) at (\XRoot,\YRoot-16) {$\big\{\ \big\}=\bot_L$};
+\begin{tikzpicture}[scale=0.5, every node/.style={draw, circle, inner sep=0pt, outer sep=0pt, font=\small}]
+\newcommand\XRoot{12}
+\newcommand\YRoot{12}
+\node[label={[label distance=-5pt, font=\scriptsize]90:$\left<^{^{m}}\mathbb{Z}_{_{M}},0\right>$}] (Atop) at (\XRoot,\YRoot) {$A_\top$};
+\node[label={[label distance=-5pt, font=\scriptsize]135:$\left<^{^{m}}\mathbb{Z}_{_{M-1}},0\right>$}] (A11) at (\XRoot-2,\YRoot-2) {$A_{11}$};
+\node[label={[label distance=-5pt, font=\scriptsize]45:$\left<^{^{m+1}}\mathbb{Z}_{_{M}},0\right>$}] (A12) at (\XRoot+2,\YRoot-2) {$A_{12}$};
+\node[label={[label distance=-5pt, font=\scriptsize]135:$\left<^{^{m}}\mathbb{Z}_{_{M-2}},0\right>$}] (A21) at (\XRoot-4,\YRoot-4) {$A_{21}$};
+\node[label={[label distance=-10pt, font=\scriptsize]above:$\left<^{^{m+1}}\mathbb{Z}_{_{M-1}},0\right>$}] (A22) at (\XRoot,\YRoot-4) {$A_{22}$};
+\node[label={[label distance=-5pt, font=\scriptsize]45:$\left<^{^{m+2}}\mathbb{Z}_{_{M}},0\right>$}] (A23) at (\XRoot+4,\YRoot-4) {$A_{23}$};
+\node[label={[label distance=-5pt, font=\scriptsize]135:$\left<^{^{m}}\mathbb{Z}_{_{M-3}},0\right>$}] (A31) at (\XRoot-6,\YRoot-6) {$A_{31}$};
+\node[label={[label distance=-10pt, font=\scriptsize]-110:$\left<^{^{m+1}}\mathbb{Z}_{_{M-2}},0\right>$}] (A32) at (\XRoot-2,\YRoot-6) {$A_{32}$};
+\node[label={[label distance=-5pt, font=\scriptsize]-70:$\left<^{^{m+2}}\mathbb{Z}_{_{M-1}},0\right>$}] (A33) at (\XRoot+2,\YRoot-6) {$A_{33}$};
+\node[label={[label distance=-5pt, font=\scriptsize]45:$\left<^{^{m+3}}\mathbb{Z}_{_{M}},0\right>$}] (A34) at (\XRoot+6,\YRoot-6) {$A_{34}$};
+\node[label={[label distance=-10pt, font=\scriptsize]100:$\big<\{m,m+1\},0\big>$}] (All1) at (\XRoot-10,\YRoot-10) {$A_{(R-1)1}$};
+\node[draw=none] at (\XRoot-6,\YRoot-10) {$\cdots$};
+\node[label={[label distance=1pt, font=\scriptsize]-200:$\big<\{-1,0\},0\big>$}] (All2) at (\XRoot-2,\YRoot-10) {$A_{(R-1)m}$};
+\node[label={[label distance=1pt, font=\scriptsize]20:$\big<\{0,1\},0\big>$}] (All3) at (\XRoot+2,\YRoot-10) {$A_{(R-1)(m+1)}$};
+\node[draw=none] at (\XRoot+6,\YRoot-10) {$\cdots$};
+\node[label={[label distance=-10pt, font=\scriptsize]80:$\big<\{M-1,M\},0\big>$}] (All4) at (\XRoot+10,\YRoot-10) {$A_{(R-1)R}$};
+\node[label={[label distance=-5pt, font=\scriptsize]-90:$\big<\{m\},0\big>$}] (Al1) at (\XRoot-13,\YRoot-13) {$A_{R1}$};
+\node[draw=none] (Al2) at (\XRoot-6.5,\YRoot-13) {$\cdots$};
+\node[label={[label distance=-5pt, font=\scriptsize]-90:$\big<\{0\},0\big>$}] (Al3) at (\XRoot,\YRoot-13) {$A_{R(m+1)}$};
+\node[draw=none] (Al4) at (\XRoot+6.5,\YRoot-13) {$\cdots$};
+\node[label={[label distance=-5pt, font=\scriptsize]-90:$\big<\{M\},0\big>$}] (Al5) at (\XRoot+13,\YRoot-13) {$A_{R(R+1)}$};
 
 \path (Atop) edge[-<-] (A11)
-			 edge[-<-] (A15)
-      (Abot) edge[->-] (A51)
-			 edge[->-] (A52)
-			 edge[->-] (A54)
-			 edge[->-] (A55)
-			 edge[->-] (A56)
-			 edge[->-] (A58)
-			 edge[->-] (A59)
-      (A51)  edge[->-] (A41)
-      (A52)  edge[->-] (A41)
-      (A54)  edge[->-] (A43)
-             edge[->-] (A44)
-      (A55)  edge[->-] (A43)
-             edge[->-] (A45)
-      (A56)  edge[->-] (A44)
-             edge[->-] (A45)
-      (A58)  edge[->-] (A47)
-      (A59)  edge[->-] (A47);
+             edge[-<-] (A12)
+      (A11)  edge[-<-] (A21)
+             edge[-<-=0.3] (A22)
+      (A12)  edge[-<-=0.3] (A22)
+             edge[-<-] (A23)
+      (A21)  edge[-<-] (A31)
+             edge[-<-] (A32)
+      (A22)  edge[-<-] (A32)
+             edge[-<-] (A33)
+      (A23)  edge[-<-] (A33)
+             edge[-<-] (A34)
+      (All1) edge[-<-] (Al1)
+      (Al3)  edge[->-] (All2)
+             edge[->-] (All3)
+      (All4) edge[-<-] (Al5);
       
-\path[dotted] (A11)  edge (A41)
-                     edge (A43)
-                     edge (A44)
-                     edge (A45)
-              (A15)  edge (A43)
-                     edge (A44)
-                     edge (A45)
-                     edge (A47)
-              (Abot) edge (A53)
-                     edge (A57)
-              (A42)  edge (A51)
-                     edge (A52)
-              (A46)  edge (A58)
-                     edge (A59)
-              (Atop) edge (A12)
-                     edge (A14);
+\path[dotted] (A31) edge (All1)
+              (Al2) edge (All1)
+                    edge (All2)
+              (Al4) edge (All3)
+                    edge (All4)
+              (A34) edge (All4);
 \end{tikzpicture}
 
 \centerline{\underline{\Large{Frontal View}}}
 
-\begin{tikzpicture}[remember picture, overlay, shift={(32mm, -60mm)}, scale=0.45, every node/.style={font=\small}]
-\newcommand\XRoot{10}
-\newcommand\YRoot{10}
-\node (A01) at (\XRoot-14,\YRoot) {$\big\{\langle m,0\rangle,\langle m+1,1\rangle\ \cdots\ \langle 0,1\rangle\ \cdots\ \langle M-1,1\rangle,\langle M,1\rangle\big\}$};
-\node (A02) at (\XRoot-4,\YRoot) {$\qquad\cdots\qquad$};
-\node (A03) at (\XRoot,\YRoot) {$R+1$};
-\node (A04) at (\XRoot+4,\YRoot) {$\qquad\cdots\qquad$};
-\node (A05) at (\XRoot+14,\YRoot) {$\big\{\langle m,1\rangle,\langle m+1,1\rangle\ \cdots\ \langle 0,1\rangle\ \cdots\ \langle M-1,1\rangle,\langle M,0\rangle\big\}$};
-\node (A11) at (\XRoot-14,\YRoot-2) {$\big\{\langle m,0\rangle,\langle m+1,1\rangle\ \cdots\ \langle 0,1\rangle\ \cdots\ \langle M-1,1\rangle\big\}$};
-\node (A12) at (\XRoot-4,\YRoot-2) {$\qquad\cdots\qquad$};
-\node (A13) at (\XRoot,\YRoot-2) {$R+1$};
-\node (A14) at (\XRoot+4,\YRoot-2) {$\qquad\cdots\qquad$};
-\node (A15) at (\XRoot+14,\YRoot-2) {$\big\{\langle m+1,1\rangle\ \cdots\ \langle 0,1\rangle\ \cdots\ \langle M-1,1\rangle,\langle M,0\rangle\big\}$};
-\node (A41) at (\XRoot-18,\YRoot-9) {$\big\{\langle m,0\rangle,\langle A_{\overline{m}},1\rangle\big\}$};
-\node (A42) at (\XRoot-12,\YRoot-9) {$\big\{\langle m+1,0\rangle,\langle A_{\overline{m+1}},1\rangle\big\}$};
-\node (A43) at (\XRoot-8,\YRoot-9) {$\cdots$};
-\node (A44) at (\XRoot-5,\YRoot-9) {$\big\{\langle -1,0\rangle,\langle A_{\overline{-1}},1\rangle\big\}$};
-\node (A45) at (\XRoot,\YRoot-9) {$\big\{\langle 0,0\rangle,\langle A_{\overline{0}},1\rangle\big\}$};
-\node (A46) at (\XRoot+5,\YRoot-9) {$\big\{\langle 1,0\rangle,\langle A_{\overline{1}},0\rangle\big\}$};
-\node (A47) at (\XRoot+8,\YRoot-9) {$\cdots$};
-\node (A48) at (\XRoot+12,\YRoot-9) {$\big\{\langle M-1,0\rangle,\langle A_{\overline{M-1}},1\rangle\big\}$};
-\node (A49) at (\XRoot+18,\YRoot-9) {$\big\{\langle M,0\rangle,\langle A_{\overline{M}},1\rangle\big\}$};
-\node (A51) at (\XRoot-14,\YRoot-12) {$\big\{\langle m,0\rangle\big\}$};
-\node (A52) at (\XRoot-10,\YRoot-12) {$\big\{\langle m+1,0\rangle\big\}$};
-\node (A53) at (\XRoot-6,\YRoot-12) {$\cdots$};
-\node (A54) at (\XRoot-3,\YRoot-12) {$\big\{\langle -1,0\rangle\big\}$};
-\node (A55) at (\XRoot,\YRoot-12) {$\big\{\langle 0,0\rangle\big\}$};
-\node (A56) at (\XRoot+3,\YRoot-12) {$\big\{\langle 1,0\rangle\big\}$};
-\node (A57) at (\XRoot+6,\YRoot-12) {$\cdots$};
-\node (A58) at (\XRoot+10,\YRoot-12) {$\big\{\langle M-1,0\rangle\big\}$};
-\node (A59) at (\XRoot+14,\YRoot-12) {$\big\{\langle M,0\rangle\big\}$};
-
-\path (A01) edge[-<-=0.8] (A11)
-	  (A05) edge[-<-=0.8] (A15)
-      (A51) edge[->-] (A41)
-      (A52) edge[->-] (A42)
-      (A54) edge[->-] (A44)
-      (A55) edge[->-] (A45)
-      (A56) edge[->-] (A46)
-      (A58) edge[->-] (A48)
-      (A59) edge[->-] (A49);
-      
-\path[dotted] (A11)  edge (A41)
-              (A15)  edge (A49)
-              (A02)  edge (A12)
-              (A04)  edge (A14);
-\end{tikzpicture}
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\centerline{\underline{\Large{Frontal View (Cross Sectional)}}}
-\\\\
-Here, Each element has exactly one tuple with 0 probability and $A_{\overline{p}}\in\{m,m+1\ \cdots\ M-1,M\}\ \setminus\ \{p\}\qquad\forall p\in[m,M]$
+\begin{itemize}
+    \item $^{^{A}}\mathbb{Z}_{_{B}}=\left\{i\in\mathbb{Z}\ |\ A\leq i\leq B\right\}$
+    \item $m=\mathtt{MININT}$
+    \item $M=\mathtt{MAXINT}$
+\end{itemize}
+\begin{description}
+  \item[In the Frontal \& Lateral View :] \hfill\\
+    $A_{Ri}\equiv A_{(M-m)i}\quad\text{and}\quad\hat{A}_{Ri}\equiv\hat{A}_{(M-m)i}\qquad\forall i$\\
+    For every pair of indices $i, j$ (and $\top$) the elements denoted by $A_{ij}$ (and $A_\top$) and $\hat{A}_{ij}$ (and $\hat{A}_\top$) have the same interval, but probability in element $A_{ij}$ (and $A_\top$) is $0$ , wherese it is 1 for $\hat{A}_{ij}$ (and $\hat{A}_\top$).\\
+    E.g: $A_{22}\equiv\left<^{^{m+1}}\mathbb{Z}_{_{M-1}},\ 0\right>$ but $\hat{A}_{22}\equiv\left<^{^{m+1}}\mathbb{Z}_{_{M-1}},\ 1\right>$
+\end{description}
 
 \newpage
-\begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
-\newcommand\XRoot{-4}
-\newcommand\YRoot{20}
-\node (A11) at (\XRoot,\YRoot) {$\big\{\langle m,1\rangle,\langle m+1,1\rangle\ \cdots\ \langle 0,1\rangle\ \cdots\ \langle M-1,1\rangle,\langle M,1\rangle\big\}$};
-\node (A12) at (\XRoot+13,\YRoot) {$\big\{\langle m,0\rangle,\langle m+1,0\rangle\ \cdots\ \langle 0,0\rangle\ \cdots\ \langle M-1,0\rangle,\langle M,0\rangle\big\}=\top_L$};
-\node (A21) at (\XRoot,\YRoot-4) {$\big\{\langle a_1,1\rangle,\langle a_2,1\rangle,\langle a_3,1\rangle\big\}$};
-\node (A22) at (\XRoot+4,\YRoot-4) {$\big\{\langle a_1,0\rangle,\langle a_2,1\rangle,\langle a_3,1\rangle\big\}$};
-\node (A23) at (\XRoot+8,\YRoot-4) {$\big\{\langle a_1,0\rangle,\langle a_2,0\rangle,\langle a_3,1\rangle\big\}$};
-\node (A24) at (\XRoot+12,\YRoot-4) {$\big\{\langle a_1,0\rangle,\langle a_2,0\rangle,\langle a_3,0\rangle\big\}$};
-\node (A31) at (\XRoot,\YRoot-6) {$\big\{\langle a_1,1\rangle,\langle a_2,1\rangle\big\}$};
-\node (A32) at (\XRoot+4,\YRoot-6) {$\big\{\langle a_1,0\rangle,\langle a_2,1\rangle\big\}$};
-\node (A33) at (\XRoot+8,\YRoot-6) {$\big\{\langle a_1,0\rangle,\langle a_2,0\rangle\big\}$};
-\node (A41) at (\XRoot,\YRoot-8) {$\big\{\langle a_1,1\rangle\big\}$};
-\node (A42) at (\XRoot+4,\YRoot-8) {$\big\{\langle a_1,0\rangle\big\}$};
-\node (A51) at (\XRoot,\YRoot-10) {$\big\{\ \big\}=\bot_L$};
+\begin{tikzpicture}[x={(6mm,-3.5mm)}, y={(0mm,15mm)}, z={(14mm,0mm)}, every node/.style={inner sep=2pt}, scale=0.9, remember picture, overlay, shift={(-20mm, -70mm)}]
+\newcommand\Root{8}
+\newcommand\Zoffset{8}
+\newcommand\InitialBlack{0.7}
+\node (A1) at (\Root,\Root,0) {$A_{\top}$};
+\node (A2) at (\Root-1,\Root-1,0) {$A_{11}$};
+\node (A3) at (\Root+1,\Root-1,0) {$A_{12}$};
+\node (A4) at (\Root-2,\Root-2,0) {$A_{21}$};
+\node (A5) at (\Root,\Root-2,0) {$A_{22}$};
+\node (A6) at (\Root+2,\Root-2,0) {$A_{23}$};
+\node (A7) at (\Root-3,\Root-3,0) {$A_{31}$};
+\node (A8) at (\Root-1,\Root-3,0) {$A_{32}$};
+\node (A9) at (\Root+1,\Root-3,0) {$A_{33}$};
+\node (A10) at (\Root+3,\Root-3,0) {$A_{34}$};
+\node (All1) at (\Root-5,\Root-5,0) {$A_{(R-1)1}$};
+\node at (\Root-3,\Root-5,0) {$\ddots$};
+\node (All2) at (\Root-1,\Root-5,0) {$A_{(R-1)m}$};
+\node (All3) at (\Root+1,\Root-5,0) {$A_{(R-1)(m+1)}$};
+\node at (\Root+3,\Root-5,0) {$\ddots$};
+\node (All4) at (\Root+5,\Root-5,0) {$A_{(R-1)R}$};
+\node (Al1) at (\Root-6,\Root-6,0) {$A_{R1}$};
+\node (Al2) at (\Root-3,\Root-6,0) {$\ddots$};
+\node (Al3) at (\Root,\Root-6,0) {$A_{R(m+1)}$};
+\node (Al4) at (\Root+3,\Root-6,0) {$\ddots$};
+\node (Al5) at (\Root+6,\Root-6,0) {$A_{R(R+1)}$};
 
-\path (A51) edge[->-] (A41)
-	  (A41) edge[->-] (A31)
-      (A31) edge[->-] (A21)
-      (A42) edge[->-] (A32)
-      (A32) edge[->-] (A22)
-      (A33) edge[->-] (A23);
-      
-\path[dashed] (A41) edge[->-] (A42)
-	          (A32) edge[-<-] (A31)
-	          (A32) edge[->-] (A33)
-              (A22) edge[-<-=0.0] (A21)
-              (A22) edge[->-=1.0] (A23)
-              (A23) edge[->-=1.0] (A24);
-              
-\path[dotted] (A11) edge[->-] (A12)
-              (A21) edge[->-] (A11)
-	          (A24) edge[->-] (A12);      
+\node (B1) at (\Root,\Root,\Zoffset) {$\hat{A}_{\top}$};
+\node[lightgray] (B2) at (\Root-1,\Root-1,\Zoffset) {$\hat{A}_{11}$};
+\node (B3) at (\Root+1,\Root-1,\Zoffset) {$\hat{A}_{12}$};
+\node[lightgray] (B4) at (\Root-2,\Root-2,\Zoffset) {$\hat{A}_{21}$};
+\node[lightgray] (B5) at (\Root,\Root-2,\Zoffset) {$\hat{A}_{22}$};
+\node (B6) at (\Root+2,\Root-2,\Zoffset) {$\hat{A}_{23}$};
+\node[lightgray] (B7) at (\Root-3,\Root-3,\Zoffset) {$\hat{A}_{31}$};
+\node[lightgray] (B8) at (\Root-1,\Root-3,\Zoffset) {$\hat{A}_{32}$};
+\node[lightgray] (B9) at (\Root+1,\Root-3,\Zoffset) {$\hat{A}_{33}$};
+\node (B10) at (\Root+3,\Root-3,\Zoffset) {$\hat{A}_{34}$};
+\node[lightgray] (Bll1) at (\Root-5,\Root-5,\Zoffset) {$\hat{A}_{(R-1)1}$};
+\node[lightgray] (Bll2) at (\Root-1,\Root-5,\Zoffset) {$\hat{A}_{(R-1)m}$};
+\node[lightgray] (Bll3) at (\Root+1,\Root-5,\Zoffset) {$\hat{A}_{(R-1)(m+1)}$};
+\node (Bll4) at (\Root+5,\Root-5,\Zoffset) {$\hat{A}_{(R-1)R}$};
+\node[lightgray] (Bl1) at (\Root-6,\Root-6,\Zoffset) {$\hat{A}_{R1}$};
+\node[lightgray] (Bl2) at (\Root-3,\Root-6,\Zoffset) {$\ddots$};
+\node[lightgray] (Bl3) at (\Root,\Root-6,\Zoffset) {$\hat{A}_{R(m+1)}$};
+\node[lightgray] (Bl4) at (\Root+3,\Root-6,\Zoffset) {$\ddots$};
+\node (Bl5) at (\Root+6,\Root-6,\Zoffset) {$\hat{A}_{R(R+1)}$};
+\node (Bottom) at (\Root,\Root-8,\Zoffset) {$A_{\bot}=\langle\{\},1\rangle$};
+
+\path[dashed] (A1)   edge[-<-] (B1)
+              (A3)   edge[-<-] (B3)
+              (A6)   edge[-<-] (B6)
+              (A10)  edge[-<-] (B10)
+              (All4) edge[-<-] (Bll4)
+              (Al5)  edge[-<-] (Bl5);
+
+\draw[dashed] (A2) -- (\Root-1,\Root-1,\InitialBlack) (A4) -- (\Root-2,\Root-2,\InitialBlack) (A5) -- (\Root,\Root-2,\InitialBlack) (A7) -- (\Root-3,\Root-3,\InitialBlack) (A8) -- (\Root-1,\Root-3,\InitialBlack) (A9) -- (\Root+1,\Root-3,\InitialBlack) (All1) -- (\Root-5,\Root-5,\InitialBlack*5) (All2) -- (\Root-1,\Root-5,\InitialBlack*3) (All3) -- (\Root+1,\Root-5,\InitialBlack*2) (Al1) -- (\Root-6,\Root-6,\InitialBlack*1.2) (Al3) -- (\Root,\Root-6,\InitialBlack*1.2);
+
+\draw[lightgray, dashed] (\Root-1,\Root-1,\InitialBlack) -- (B2) (\Root-2,\Root-2,\InitialBlack) -- (B4) (\Root,\Root-2,\InitialBlack) -- (B5) (\Root-3,\Root-3,\InitialBlack) -- (B7) (\Root-1,\Root-3,\InitialBlack) -- (B8) (\Root+1,\Root-3,\InitialBlack) -- (\Root+1,\Root-3,\Zoffset) (\Root-5,\Root-5,\InitialBlack*5) -- (Bll1) (\Root-1,\Root-5,\InitialBlack*3) -- (Bll2) (\Root+1,\Root-5,\InitialBlack*2) -- (Bll3) (\Root-6,\Root-6,\InitialBlack*1.2) -- (Bl1) (\Root,\Root-6,\InitialBlack*1.2) -- (Bl3);
+
+\draw (A1) edge[-<-] (A2) (A2) edge[-<-] (A4) (A4) edge[-<-] (A7) (A1) edge[-<-] (A3) (A3) edge[-<-] (A6) (A6) edge[-<-] (A10);
+
+\draw (A2) edge[-<-] (A5) (A3) edge[-<-] (A5) (A4) edge[-<-] (A8) (A5) edge[-<-] (A8) (A5) edge[-<-] (A9) (A6) edge[-<-] (A9) (All1) edge[-<-] (Al1) (All4) edge[-<-] (Al5) (All2) edge[-<-] (Al3) (All3) edge[-<-] (Al3) (Bl5) edge[-<-] (Bottom) (Bottom) -- (\Root+6,\Root-6,\Zoffset*0.679) (Bottom) -- (\Root+5.75,\Root-6.05,\Zoffset*0.64);
+
+\draw[dotted] (A7) -- (All1) -- (Al2) (A10) -- (All4) -- (Al4) (All2) -- (Al2) (All3) -- (Al4) (B10) -- (Bll4) (Bl2) -- (Bottom) -- (Bl4);
+
+\draw (B1) edge[-<-=0.3] (B3) (B3) edge[-<-=0.4] (B6) (B6) edge[-<-=0.4] (B10) (Bll4) edge[-<-=0.4] (Bl5);
+
+\draw[lightgray, dotted] (B7) edge (Bll1) (Bll1) edge (Bl2) (Bll2) edge (Bl2) (Bll3) edge (Bl4) (Bll4) edge (Bl4);
+
+\draw[lightgray] (B1) edge[-<-] (B2) (B2) edge[-<-=0.4] (B4) (B2) edge[-<-=0.6] (B5) (B3) edge[-<-] (B5) (B4) edge[-<-=0.4] (B7) (B4) edge[-<-] (B8) (B5) edge[-<-=0.4] (B8) (B5) edge[-<-=0.7] (B9) (B6) edge[-<-=0.7] (B9) (Bll1) edge[-<-] (Bl1) (Bll2) edge[-<-=0.6] (Bl3) (Bll3) edge[-<-=0.6] (Bl3) (Bl3) edge[-<-] (\Root+6,\Root-6,\Zoffset*0.679) (\Root+5.75,\Root-6.05,\Zoffset*0.64) edge[->-=0.7] (Bl1);
 \end{tikzpicture}
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\centerline{\underline{\Large{Lateral View (Skewed)}}}
+\begin{tikzpicture}[remember picture, overlay, shift={(0mm, -90mm)}]
+\newcommand\XRoot{8}
+\newcommand\YRoot{8}
+\node (Top) at (\XRoot,\YRoot) {$\hat{A}_\top$};
+\node (A12) at (\XRoot-1,\YRoot-1) {$\hat{A}_{12}$};
+\node (A11) at (\XRoot+1,\YRoot-1) {$\hat{A}_{11}$};
+\node (A23) at (\XRoot-2,\YRoot-2) {$\hat{A}_{23}$};
+\node (A22) at (\XRoot,\YRoot-2) {$\hat{A}_{22}$};
+\node (A21) at (\XRoot+2,\YRoot-2) {$\hat{A}_{21}$};
+\node (A34) at (\XRoot-3,\YRoot-3) {$\hat{A}_{34}$};
+\node (A33) at (\XRoot-1,\YRoot-3) {$\hat{A}_{33}$};
+\node (A32) at (\XRoot+1,\YRoot-3) {$\hat{A}_{32}$};
+\node (A31) at (\XRoot+3,\YRoot-3) {$\hat{A}_{31}$};
+\node (All1) at (\XRoot-5,\YRoot-5) {$\hat{A}_{(R-1)R}$};
+\node (All2) at (\XRoot-3,\YRoot-5) {$\cdots$};
+\node (All3) at (\XRoot-1,\YRoot-5) {$\hat{A}_{(R-1)(m+1)}$};
+\node (All4) at (\XRoot+1,\YRoot-5) {$\hat{A}_{(R-1)m}$};
+\node (All5) at (\XRoot+3,\YRoot-5) {$\cdots$};
+\node (All6) at (\XRoot+5,\YRoot-5) {$\hat{A}_{(R-1)1}$};
+\node (Al1) at (\XRoot-6,\YRoot-6) {$\hat{A}_{R(R+1)}$};
+\node (Al2) at (\XRoot-3,\YRoot-6) {$\cdots$};
+\node (Al3) at (\XRoot,\YRoot-6) {$\hat{A}_{R(m+1)}$};
+\node (Al4) at (\XRoot+3,\YRoot-6) {$\cdots$};
+\node (Al5) at (\XRoot+6,\YRoot-6) {$\hat{A}_{R1}$};
+\node (Bottom) at (\XRoot,\YRoot-8) {$A_\bot$};
 
-\centerline{\underline{\Large{Lateral View (Cross Sectional)}}}
+\path (Bottom) edge[->-] (Al1)
+               edge[->-] (Al3)
+               edge[->-] (Al5);
 
-Here,
-\begin{itemize}
-  \item $\bot_L=\big\{\ \big\}\qquad\top_L=\big\{\langle m,0\rangle,\langle m+1,0\rangle\ \cdots\ \langle 0,0\rangle\ \cdots\ \langle M-1,0\rangle,\langle M,0\rangle\big\}$
-  \item $a_1,a_2$ and $a_3$ are placeholders with $a_1,a_2,a_3\in[m,M]$
-\end{itemize}
+\path (Top) edge[-<-] (A12) (Top) edge[-<-] (A11) (A12) edge[-<-] (A23) (A12) edge[-<-] (A22) (A11) edge[-<-] (A22) (A11) edge[-<-] (A21) (A23) edge[-<-] (A34) (A23) edge[-<-] (A33) (A22) edge[-<-] (A33) (A22) edge[-<-] (A32) (A21) edge[-<-] (A32) (A21) edge[-<-] (A31) (All1) edge[-<-] (Al1) (All3) edge[-<-] (Al3) (All4) edge[-<-] (Al3) (All6) edge[-<-] (Al5);
 
-
-
-
-
-
-
-
+\draw[dotted] (Al2) -- (Bottom) -- (Al4) (A34) -- (All1) (A31) -- (All6) (All1) -- (Al2) -- (All3) (All4) -- (Al4) -- (All6);
+\end{tikzpicture}
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\centerline{\underline{\Large{Rear View}}}
 
 
 
