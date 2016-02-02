@@ -7,6 +7,11 @@
 
 #define EVALUATION_STACK_SIZE 1024
 
+#define MAX_ITERATION 20
+
+//#define CONCRETE_DEBUG
+//#define ABSTRACT_DEBUG
+
 #define MININT  SHRT_MIN
 #define MAXINT  SHRT_MAX
 
@@ -14,10 +19,5 @@
 #define PR_BOOL(p) (p + (1-p)/2)
 
 #define is_id_block(n) ((n->type == IDBLOCK || (n->type == LOGOPBLOCK && !atoi(n->token) && n->token[0] != '0')) ? true : false)
-
-#define MAX_ITERATION 20
-
-//#define CONCRETE_DEBUG
-//#define ABSTRACT_DEBUG
 
 #endif

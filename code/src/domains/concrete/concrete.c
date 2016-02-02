@@ -1,7 +1,7 @@
 #include "concrete.h"
 
-int N_iterations, first_program_point;
-bool is_solution_fixed;
+int N_concrete_iterations, first_concrete_program_point;
+bool is_concrete_solution_fixed;
 
 ConcreteState *init_concrete_state() {
   ConcreteState *state = (ConcreteState *) calloc(1, sizeof(ConcreteState));
@@ -500,9 +500,9 @@ void concrete_analysis() {
     is_fixed = iterate(initial_program_point);
   } while(!is_fixed && i < MAX_ITERATION);
 
-  is_solution_fixed = is_fixed;
-  N_iterations = i;
-  first_program_point = initial_program_point;
+  is_concrete_solution_fixed = is_fixed;
+  N_concrete_iterations = i;
+  first_concrete_program_point = initial_program_point;
 
   free(empty_state_status);
   for (i = 0; i <= N_lines; i++)
@@ -513,8 +513,8 @@ void concrete_analysis() {
 void print_concrete_analysis_result() {
   
   int i;
-  if (is_solution_fixed) printf("Reached fixed point after %d iterations\n\n", N_iterations);
-  else printf("Fixed point is not reached within %d iterations\n\n", N_iterations);
+  if (is_concrete_solution_fixed) printf("Reached fixed point after %d iterations\n\n", N_concrete_iterations);
+  else printf("Fixed point is not reached within %d iterations\n\n", N_concrete_iterations);
 
   for (i = 1; i <= N_lines; i++) {
     if (data_flow_matrix[i]) {
@@ -522,7 +522,7 @@ void print_concrete_analysis_result() {
       int j;
       for (j = 0; j < N_variables; ++j) {
         printf("    %s=<{", symbol_table[symbol_table_indices[j]].id);
-        if (i == first_program_point)
+        if (i == first_concrete_program_point)
           printf("a∈ ℤ | m ≤ a ≤ M}, 1>");
         else if (symbol_table[symbol_table_indices[j]].concrete[i])
           print_concrete_state(symbol_table[symbol_table_indices[j]].concrete[i]);

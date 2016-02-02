@@ -1,7 +1,7 @@
 #include "abstract.h"
 
-int N_iterations, first_program_point;
-bool is_solution_fixed;
+int N_abstract_iterations, first_abstract_program_point;
+bool is_abstract_solution_fixed;
 
 static int initialize_first_program_point() {
   int i, j;
@@ -618,9 +618,9 @@ void abstract_analysis(bool widening) {
   // Narrowing
   if (widening) iterate(initial_program_point, false);
 
-  is_solution_fixed = is_fixed;
-  N_iterations = i;
-  first_program_point = initial_program_point;
+  is_abstract_solution_fixed = is_fixed;
+  N_abstract_iterations = i;
+  first_abstract_program_point = initial_program_point;
 
   free(empty_state_status);
   for (i = 0; i <= N_lines; i++)
@@ -630,8 +630,8 @@ void abstract_analysis(bool widening) {
 
 void print_abstract_analysis_result() {
   int i;
-  if (is_solution_fixed) printf("Reached fixed point after %d iterations\n\n", N_iterations);
-  else printf("Fixed point is not reached within %d iterations\n\n", N_iterations);
+  if (is_abstract_solution_fixed) printf("Reached fixed point after %d iterations\n\n", N_abstract_iterations);
+  else printf("Fixed point is not reached within %d iterations\n\n", N_abstract_iterations);
 
   for (i = 1; i <= N_lines; i++) {
     if (data_flow_matrix[i]) {
@@ -639,7 +639,7 @@ void print_abstract_analysis_result() {
       int j;
       for (j = 0; j < N_variables; ++j) {
         printf("    %s=<[", symbol_table[symbol_table_indices[j]].id);
-        if (i == first_program_point)
+        if (i == first_abstract_program_point)
           printf("m,M], 1>");
         else if (((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->is_empty_interval)
           printf("], 1>");
