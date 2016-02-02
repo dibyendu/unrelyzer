@@ -87,14 +87,16 @@ void copy_state(ConcreteState *src, ConcreteState *dest) {
   dest->is_top_element = src->is_top_element;
 }
 
-void evaluate(Ast *node, ConcreteState *state, ConcreteAllTuple *list, int N_list, bool is_logical, int dest_index, bool *is_true) {
+void evaluate(Ast *node, ConcreteState *state, ConcreteAllTuple *list, int N_list, int program_point, bool is_logical, int dest_index, bool *is_true) {
   int stack[EVALUATION_STACK_SIZE], top = 0;
   double probability = 1.0;
-  void _postfix_traversal(Ast *node, double *probability) {
+  void _postfix_traversal(Ast *node, double *probability, bool visited[]) {
   	int j;
     if (!node->number_of_children) {
       if (is_id_block(node)) {
         int index = get_symbol_table_index(node->token);
+        if (!visited[index] && !is_logical) *probability *= ((ConcreteState *) symbol_table[index].concrete[program_point])->probability;
+        visited[index] = true;
         for (j = 0; j < N_list; ++j)
           if (list[j].symbol_table_index == index)
             break;
@@ -105,7 +107,7 @@ void evaluate(Ast *node, ConcreteState *state, ConcreteAllTuple *list, int N_lis
       return;
     }
     for (j = 0; j < node->number_of_children; ++j)
-      _postfix_traversal(node->children[j], probability);
+      _postfix_traversal(node->children[j], probability, visited);
     int result = 0, operand1, operand2 = stack[--top];
     if (node->number_of_children == 2)
       operand1 = stack[--top];
@@ -171,7 +173,8 @@ void evaluate(Ast *node, ConcreteState *state, ConcreteAllTuple *list, int N_lis
   	
   while (true) {
     probability = 1.0;
-    _postfix_traversal(node, &probability);
+    bool visited[SYMBOL_TABLE_SIZE] = {false};
+    _postfix_traversal(node, &probability, visited);
 
     #ifdef CONCRETE_DEBUG
     for (j = 0; j < N_list; ++j)
@@ -279,7 +282,8 @@ static void evaluate_expression(Ast *node, int from_program_point) {
         	((ConcreteState *) node->value)->component_states[i]);
   }
 
-  evaluate(evaluation_node, (ConcreteState *) node->value, tuples, N_unique_variables, node->type == ASSIGNBLOCK ? false : true, dest_index, &is_true);
+  evaluate(evaluation_node, (ConcreteState *) node->value, tuples, N_unique_variables, from_program_point,
+    node->type == ASSIGNBLOCK ? false : true, dest_index, &is_true);
 
   if (node->type == ASSIGNBLOCK)
   	((ConcreteState *) node->value)->component_states[dest_index]->probability = PR_ARITH(PR_WR) * ((ConcreteState *) node->value)->probability;

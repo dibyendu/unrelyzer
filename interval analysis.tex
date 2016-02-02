@@ -23,7 +23,7 @@
 \usepackage{paralist}
 \usepackage{multirow}
 \usepackage{calc}
-\usepackage{soul}  %% for highlighting text
+%% \usepackage{soul}  %% for highlighting text
 \usepackage{pstricks,pst-node,pst-tree,pstricks-add}  %% for drawing CFG and 2D view of the lattice
 \usepackage{tikz}  %% for drawing rest of the images
 \usetikzlibrary{shapes, snakes, decorations.markings}
@@ -257,14 +257,14 @@ We are interested in static analysis of these type of probabilistic programs by 
 From the above arguments we can infer that in the concrete domain each possible program state is associated with some probability. We represent program state as a tuple of sets values and its associated probability. For program with a single integer variable, the concrete domain is $\quad L\subseteq2^{\mathbb{Z}}\times\mathbb{R}\quad$ and
 
 \centerline{
-  \hl{$L=\left\{\left(S,p\right)\ \middle|\ S\in2^{\mathbb{Z}}\setminus\phi\bigwedge p\in\mathbb{R}\bigwedge \forall s\in S, \mathtt{MININT}\leq s\leq\mathtt{MAXINT}\bigwedge 0\leq p\leq1\right\}\bigcup\left\{\left(\phi,1\right)\right\}$}
+  $L=\left\{\left(S,p\right)\ \middle|\ S\in2^{\mathbb{Z}}\setminus\phi\bigwedge p\in\mathbb{R}\bigwedge \forall s\in S, \mathtt{MININT}\leq s\leq\mathtt{MAXINT}\bigwedge 0\leq p\leq1\right\}\bigcup\left\{\left(\phi,1\right)\right\}$
 }
 
 Throughout our discussion we assume that our program variables take values between $\mathbf{\mathtt{MININT}}$ and $\mathbf{\mathtt{MAXINT}}$ (including both). $\langle S_i,p_i\rangle$ denotes that at a particular program point, say $v_i$, variable $x_i$ (say) takes its values from set $S_i$ with probability $p_i$. In general, for program with $n$ integer variables, this concrete domain will be $L^n$
 
 We define a partial order $\sqsubseteq_L$ on $L$ as follows :
 
-\centerline{\hl{$\forall \langle S_1,p_1\rangle, \langle S_2,p_2\rangle\in L\qquad \langle S_1,p_1\rangle\sqsubseteq_L \langle S_2,p_2\rangle\qquad\iff \qquad S_1\subseteq S_2\quad\bigwedge\quad p_1\geq p_2$}}
+\centerline{$\forall \langle S_1,p_1\rangle, \langle S_2,p_2\rangle\in L\qquad \langle S_1,p_1\rangle\sqsubseteq_L \langle S_2,p_2\rangle\qquad\iff \qquad S_1\subseteq S_2\quad\bigwedge\quad p_1\geq p_2$}
 
 As an example,\\
 \centerline{
@@ -315,7 +315,7 @@ We assume that there are $n$ variables in the program, namely, $x_1,x_2\cdots x_
   =&\quad sp\Big(\langle(S_1,p_1),(S_2,p_2),\cdots,(S_{i_f},p_{i_f}),\cdots,(S_n,p_n)\rangle,\ x_{i_f} =_\bullet x_{i_1} \op[prob]{A}{2} x_{i_2} \op[prob]{A}{3} \cdots \op[prob]{A}{k} x_{i_k}\Big)&&&\nonumber\\
   =&\quad \langle(S_1,p_1),(S_2,p_2),\cdots,(S^*_{i_f},p^*_{i_f}),\cdots,(S_n,p_n)\rangle = P^*&&&\label{eq:sp_arith}\\
   &\text{where,}\qquad S^*_{i_f}=\left\{\mathcal{V}(t,x_{i_1}) \op{A}{2} \mathcal{V}(t,x_{i_2})  \op{A}{3} \cdots \op{A}{k} \mathcal{V}(t,x_{i_k})\quad\middle|\quad\forall t\in S_1\times S_2\times\cdots\times S_n\right\}\qquad\text{and}&&&\nonumber\\
-  &\qquad\qquad\ \ p^*_{i_f}=\left(Pr(Wr)+\frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)^{|vars|}\cdot\prod_{j=1}^k \mathcal{P}(P,x_{i_j})\ \cdot&&&\nonumber\\
+  &\qquad\qquad\ \ p^*_{i_f}=\left(Pr(Wr)+\frac{1-Pr(Wr)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)\cdot\left(Pr(Rd) + \frac{1-Pr(Rd)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)^{|vars|}\cdot\prod_{\forall\ x_i\ \in\ vars} \mathcal{P}(P,x_i)\ \cdot&&&\nonumber\\
   &\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\prod_{j=2}^k\left(Pr\left(\op[prob]{A}{j}\right)+\frac{1-Pr\left(\op[prob]{A}{j}\right)}{\mathtt{MAXINT}-\mathtt{MININT}+1}\right)&&&\nonumber\\
   &\text{where,}\qquad vars=\left\{x_{i_j}\ :\ \forall j\in \{1,2,\cdots,k\}\text{ and } x_{i_j}\text{ is a variable}\right\}&&&\nonumber\\\nonumber\\
   &\quad sp\left(P,\ \left(x_{i_1} \op[prob]{A}{i_2} x_{i_2} \op[prob]{A}{i_3} \cdots \op[prob]{A}{i_k} x_{i_k}\right)\ \op[prob]{C}{}\ \left(x_{j_1} \op[prob]{A}{j_2} x_{j_2} \op[prob]{A}{j_3} \cdots \op[prob]{A}{j_m} x_{j_m}\right)\right)&&&\nonumber\\
@@ -400,18 +400,18 @@ Similar intuition is applicable in defining $\sqsubseteq_M$ on \textbf{Probabili
 
 We define a partial order $\sqsubseteq_M$ on $M$ as follows :
 
-\centerline{\hl{$\forall \langle[a,b],p_{ab}\rangle, \langle[c,d],p_{cd}\rangle\in M\qquad\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$}}
+\centerline{$\forall \langle[a,b],p_{ab}\rangle, \langle[c,d],p_{cd}\rangle\in M\qquad\langle[a,b],p_{ab}\rangle\sqsubseteq_M\langle[c,d],p_{cd}\rangle$}
 iff
 \begin{enumerate}[i)]
-\item \hl{$[a,b]\sqsubseteq_{int}[c,d]$}
-\item \hl{$p.m.f\Big(\langle[a,b],p_{ab}\rangle\Big)\geq\ p.m.f\Big(\langle[c,d],p_{cd}\rangle\Big)$}
+\item $[a,b]\sqsubseteq_{int}[c,d]$
+\item $p.m.f\Big(\langle[a,b],p_{ab}\rangle\Big)\geq\ p.m.f\Big(\langle[c,d],p_{cd}\rangle\Big)$
 \end{enumerate}
 all the above conditions hold simultaneously. So, clearly tuples whose intervals aren't related by $\sqsubseteq_{int}$ will not partake in $\sqsubseteq_M$.
 
 $\sqsubseteq_M$ is a \textbf{partial order relation}. For its proof please refer to \ref{app:interval_partial}. Formal definition of the \textbf{Probabilistic Interval Abstract Domain}, $M$, is $M\subseteq \mathbb{Z}^2\times\mathbb{R}$, such that,
 
-\hl{$M=\big\{\langle[a,b],p_{ab}\rangle\ \ |\ \ a,b\in\mathbb{Z}, p_{ab}\in\mathbb{R}, \mathtt{MININT}\leq a\leq b\leq\mathtt{MAXINT}, 0\leq p_{ab}\leq1\big\}\ \bigcup\ \big\{\perp_M\big\}$\\
-where $\perp_M$ is the least element of $M$. $\bot_M=\langle[\ ],1\rangle$ i.e the tuple of empty interval and probability 1.} For $n$ number of program variables this domain will be $M^n$.
+$M=\big\{\langle[a,b],p_{ab}\rangle\ \ |\ \ a,b\in\mathbb{Z}, p_{ab}\in\mathbb{R}, \mathtt{MININT}\leq a\leq b\leq\mathtt{MAXINT}, 0\leq p_{ab}\leq1\big\}\ \bigcup\ \big\{\perp_M\big\}$\\
+where $\perp_M$ is the least element of $M$. $\bot_M=\langle[\ ],1\rangle$ i.e the tuple of empty interval and probability 1. For $n$ number of program variables this domain will be $M^n$.
 
 The poset $(M,\ \sqsubseteq_M)$ is a \textbf{lattice}. For that we show that for any two elements in $M$ there exist a unique infimum and a unique supremum. We now define the least upper bound or $l.u.b$, $\displaystyle\bigsqcup_M$ and the greatest lower bound or $g.l.b$, $\displaystyle\bigsqcap^M$ for any two elements of $M$ as follows.
 
@@ -517,7 +517,7 @@ $\forall m\in M,\quad$$\ALPHA$$\Big(sp\big($$\GAMMA$$(m),\ \sigma\big)\Big)\sqsu
 The functions $\ALPHA$ and $\GAMMA$ are defined earlier for the Probalilistic Interval domain abstraction. In case $sp^\#$ is the \textbf{\textit{most precise safe approximation}}, we can write
 
 \centerline{
-\hl{$\ALPHA$$\Big(sp\big($$\GAMMA$$(m),\ \sigma\big)\Big)=sp^\#\big(m,\ \sigma\big)$}
+$\ALPHA$$\Big(sp\big($$\GAMMA$$(m),\ \sigma\big)\Big)=sp^\#\big(m,\ \sigma\big)$
 }
 Therefore, using $\ALPHA$ and $\GAMMA$ from equations \ref{eq:alpha} and \ref{eq:gamma} respectively, we can use the above relation to compute $sp^\#$. A few examples of $sp^\#(m,\sigma)$ for different kinds of program statements are as follows. For notational convenience we write
 
