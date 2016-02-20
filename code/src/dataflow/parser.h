@@ -84,7 +84,7 @@ void parse(const char *filename);
 void build_control_flow_graph(Cfg *, Ast *);
 void generate_dot_file(const char *filename, GraphT);
 void generate_dataflow_equations(void);
-void print_dataflow_equations(void);
+void print_dataflow_equations(FILE *);
 void free_parse_tree(ParseTree *);
 IntSet *avl_tree_insert(IntSet *, int, bool *);
 

@@ -9,9 +9,6 @@
 
 #define MAX_ITERATION 20
 
-//#define CONCRETE_DEBUG
-//#define ABSTRACT_DEBUG
-
 #define MININT  SHRT_MIN
 #define MAXINT  SHRT_MAX
 

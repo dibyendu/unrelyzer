@@ -161,7 +161,7 @@ char *expression_to_string(Ast *node, char *stmt) {
   return stmt;
 }
 
-void print_dataflow_equations() {
+void print_dataflow_equations(FILE *stream) {
   void _print_subsscript(int num) {
     static char *subscript[] = {"₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"};
     int reverse = 0, digits = 0;
@@ -172,12 +172,12 @@ void print_dataflow_equations() {
     }
     digits = digits ? digits : 1;
     while (reverse) {
-      printf("%s", subscript[reverse % 10]);
+      fprintf(stream, "%s", subscript[reverse % 10]);
       reverse /= 10;
       digits -= 1;
     }
     while (digits) {
-      printf("%s", subscript[0]);
+      fprintf(stream, "%s", subscript[0]);
       digits -= 1;
     }
   }
@@ -186,35 +186,35 @@ void print_dataflow_equations() {
   char stmt[1024] = {0};
   for (i = 1; i <= N_lines; i++) {
     if (data_flow_matrix[i]) {
-      printf("G");
+      fprintf(stream, "G");
       _print_subsscript(i);
-      printf(" = ");
+      fprintf(stream, " = ");
       first = 1;
       for (j = 1; j <= N_lines; j++) {
         if (data_flow_matrix[i][j]) {
           stmt[0] = 0;
-          printf("%ssp(G", first ? " " : " ⊔  ");
+          fprintf(stream, "%ssp(G", first ? " " : " ⊔  ");
           _print_subsscript(j);
-          printf(", %s)", expression_to_string(data_flow_matrix[i][j], stmt));
+          fprintf(stream, ", %s)", expression_to_string(data_flow_matrix[i][j], stmt));
           first = first ? 0 : 0;
         }
       }
-      printf("\n");
+      fprintf(stream, "\n");
     }
   }
   first = 1;
-  printf("G");
+  fprintf(stream, "G");
   _print_subsscript(N_lines + 1);
-  printf(" = ");
+  fprintf(stream, " = ");
   for (j = 1; j <= N_lines; j++) {
     if (data_flow_matrix[0][j]) {
       stmt[0] = 0;
-      printf("%ssp(G", first ? " " : " ⊔  ");
+      fprintf(stream, "%ssp(G", first ? " " : " ⊔  ");
       _print_subsscript(j);
-      printf(", %s)", expression_to_string(data_flow_matrix[0][j], stmt));
+      fprintf(stream, ", %s)", expression_to_string(data_flow_matrix[0][j], stmt));
       first = first ? 0 : 0;
     }
   }
-  printf("\n");
+  fprintf(stream, "\n");
   return;
 }

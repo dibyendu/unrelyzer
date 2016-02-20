@@ -1,9 +1,9 @@
-import subprocess
+import subprocess, sys
 
 concrete, abs_no_wd, abs_wd = [], [], []
 
 for i in xrange(0, 10):
-	proc = subprocess.Popen(["./analyzer", "-c", "input"], stdout=subprocess.PIPE)
+	proc = subprocess.Popen(["./analyzer", "-c", sys.argv[1]], stdout=subprocess.PIPE)
 	while True:
 		line = proc.stdout.readline()
 		if line != '':
@@ -13,7 +13,7 @@ for i in xrange(0, 10):
 			break
 
 for i in xrange(0, 10):
-	proc = subprocess.Popen(["./analyzer", "input"], stdout=subprocess.PIPE)
+	proc = subprocess.Popen(["./analyzer", sys.argv[1]], stdout=subprocess.PIPE)
 	while True:
 		line = proc.stdout.readline()
 		if line != '':
@@ -23,7 +23,7 @@ for i in xrange(0, 10):
 			break
 
 for i in xrange(0, 10):
-	proc = subprocess.Popen(["./analyzer", "-w", "input"], stdout=subprocess.PIPE)
+	proc = subprocess.Popen(["./analyzer", "-w", sys.argv[1]], stdout=subprocess.PIPE)
 	while True:
 		line = proc.stdout.readline()
 		if line != '':

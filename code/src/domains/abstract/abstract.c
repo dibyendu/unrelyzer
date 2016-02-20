@@ -126,7 +126,7 @@ static void evaluate_arithmatic(Ast *node, AbstractState *state, int program_poi
   state->is_empty_interval = is_empty_result;
 }
 
-void evaluate_logical(Ast *node, AbstractState *state, AbstractAllTuple *list, int N_list, bool *is_true) {
+void evaluate_logical(bool verbose, Ast *node, AbstractState *state, AbstractAllTuple *list, int N_list, bool *is_true) {
   int stack[EVALUATION_STACK_SIZE], top = 0;
   double probability = 1.0;
   bool is_first_tuple = true;
@@ -202,22 +202,22 @@ void evaluate_logical(Ast *node, AbstractState *state, AbstractAllTuple *list, i
 
   int j;
 
-  #ifdef ABSTRACT_DEBUG
-  printf("\n....................... evaluation steps (logical) .......................\n");
-  for (j = 0; j < N_list; ++j)
-    printf("%s%s, ", j == 0 ? "(" : "", symbol_table[list[j].symbol_table_index].id);
-  printf("Result%s  ::  ", j ? ")" : "");
-  #endif
+  if (verbose) {
+    printf("\n....................... evaluation steps (logical) .......................\n");
+    for (j = 0; j < N_list; ++j)
+      printf("%s%s, ", j == 0 ? "(" : "", symbol_table[list[j].symbol_table_index].id);
+    printf("Result%s  ::  ", j ? ")" : "");
+  }
     
   while (true) {
     probability = 1.0;
     _postfix_traversal(node, &probability);
 
-    #ifdef ABSTRACT_DEBUG
-    for (j = 0; j < N_list; ++j)
-      printf("%s%d,", j == 0 ? "(" : "", list[j].min_value + list[j].current_index);
-    printf("%d%s  ", limit(stack[top-1]), j ? ")" : "");
-    #endif
+    if (verbose) {
+      for (j = 0; j < N_list; ++j)
+        printf("%s%d,", j == 0 ? "(" : "", list[j].min_value + list[j].current_index);
+      printf("%d%s  ", limit(stack[top-1]), j ? ")" : "");
+    }
 
     if (stack[--top]) {
       *is_true = true;
@@ -252,9 +252,7 @@ void evaluate_logical(Ast *node, AbstractState *state, AbstractAllTuple *list, i
 
   state->probability *= probability;
 
-  #ifdef ABSTRACT_DEBUG
-  printf("\n..........................................................................\n");
-  #endif
+  if (verbose) printf("\n..........................................................................\n");
 }
 
 static void populate_tuples_list(Ast *node, AbstractAllTuple *map, int program_point) {
@@ -288,7 +286,7 @@ static void populate_tuples_list(Ast *node, AbstractAllTuple *map, int program_p
   _traverse(node);
 }
 
-static void evaluate_expression(Ast *node, int from_program_point) {
+static void evaluate_expression(bool verbose, Ast *node, int from_program_point) {
   Ast *evaluation_node = node;
   if (node->type == ASSIGNBLOCK)
     evaluation_node = node->children[1];
@@ -309,7 +307,7 @@ static void evaluate_expression(Ast *node, int from_program_point) {
     AbstractAllTuple *tuples = (AbstractAllTuple *) calloc(N_unique_variables, sizeof(AbstractAllTuple));
     populate_tuples_list(evaluation_node, tuples, from_program_point);
 
-    evaluate_logical(evaluation_node, (AbstractState *) node->value, tuples, N_unique_variables, &is_true);
+    evaluate_logical(verbose, evaluation_node, (AbstractState *) node->value, tuples, N_unique_variables, &is_true);
 
     bool *no_need_to_be_copied = (bool *) calloc(N_variables, sizeof(bool));
     for (i = 0; i < N_unique_variables; ++i)
@@ -339,11 +337,11 @@ static void evaluate_expression(Ast *node, int from_program_point) {
   else if (node->type == ASSIGNBLOCK) {
   	evaluate_arithmatic(evaluation_node, (AbstractState *) node->value, from_program_point);
 
-  	#ifdef ABSTRACT_DEBUG
-  	printf("\n....................... evaluation steps (assignment) .......................\n");
-  	printf("%s : [%d,%d]\n", node->children[0]->token, ((AbstractState *) node->value)->lower, ((AbstractState *) node->value)->upper);
-    printf(".............................................................................\n");
-    #endif
+  	if (verbose) {
+      printf("\n....................... evaluation steps (assignment) .......................\n");
+      printf("%s : [%d,%d]\n", node->children[0]->token, ((AbstractState *) node->value)->lower, ((AbstractState *) node->value)->upper);
+      printf(".............................................................................\n");
+    }
 
     int i, dest_index = -1, index = get_symbol_table_index(node->children[0]->token);
     while (dest_index < N_variables && symbol_table_indices[++dest_index] != index);
@@ -448,7 +446,7 @@ void find_min_in_constant_set(IntSet *set, int key, int *min) {
 	find_min_in_constant_set(set->left, key, min);
 }
 
-static bool iterate(int initial_program_point, bool widening) {
+static bool iterate(bool verbose, int initial_program_point, bool widening) {
 
   bool has_fixed_point_reached = true;
   void _iterate(bool iterate_exit_program_point) {
@@ -457,48 +455,46 @@ static bool iterate(int initial_program_point, bool widening) {
       bool is_first_eqn = true, program_point_is_fixed = true;
       AbstractState *previous_state = NULL;
 
-      #ifdef ABSTRACT_DEBUG
-      printf("\n==============================================================================\n");
-      #endif
+      if (verbose) printf("\n==============================================================================\n");
 
       for (j = 0; j <= N_lines; j++) {
         if (data_flow_graph[i][j]) {
 
-          #ifdef ABSTRACT_DEBUG
-          char stmt[200] = {0};
-          printf("G_%d <- G_%d [ %s ] %s\n", i ? i : N_lines + 1, j ? j : N_lines + 1, expression_to_string(data_flow_matrix[i][j], stmt),
-            data_flow_matrix[i][j]->type == LOGOPBLOCK ? "logical" : (data_flow_matrix[i][j]->type == ASSIGNBLOCK ? "assignment" : ""));
-          #endif
+          if (verbose) {
+            char stmt[200] = {0};
+            printf("G_%d <- G_%d [ %s ] %s\n", i ? i : N_lines + 1, j ? j : N_lines + 1, expression_to_string(data_flow_matrix[i][j], stmt),
+              data_flow_matrix[i][j]->type == LOGOPBLOCK ? "logical" : (data_flow_matrix[i][j]->type == ASSIGNBLOCK ? "assignment" : ""));
+          }
 
           if (is_first_eqn) {
             is_first_eqn = false;
-            evaluate_expression(data_flow_matrix[i][j], j);
+            evaluate_expression(verbose, data_flow_matrix[i][j], j);
 
-            #ifdef ABSTRACT_DEBUG
-            printf("evaluated result :: \t");
-            print_abstract_state((AbstractState *) data_flow_matrix[i][j]->value);
-            printf("\n");
-            #endif
+            if (verbose) {
+              printf("evaluated result :: \t");
+              print_abstract_state((AbstractState *) data_flow_matrix[i][j]->value);
+              printf("\n");
+            }
 
             previous_state = (AbstractState *) data_flow_matrix[i][j]->value;
             data_flow_matrix[i][j]->value = NULL;
             continue;
           }
-          evaluate_expression(data_flow_matrix[i][j], j);
+          evaluate_expression(verbose, data_flow_matrix[i][j], j);
 
-          #ifdef ABSTRACT_DEBUG
-          printf("evaluated result ::\t");
-          print_abstract_state((AbstractState *) data_flow_matrix[i][j]->value);
-          #endif
+          if (verbose) {
+            printf("evaluated result ::\t");
+            print_abstract_state((AbstractState *) data_flow_matrix[i][j]->value);
+          }
 
           upper_bound(&previous_state, (AbstractState *) data_flow_matrix[i][j]->value);
           data_flow_matrix[i][j]->value = NULL;
 
-          #ifdef ABSTRACT_DEBUG
-          printf("\nupper bound ::\t");
-          print_abstract_state(previous_state);
-          printf("\n");
-          #endif
+          if (verbose) {
+            printf("\nupper bound ::\t");
+            print_abstract_state(previous_state);
+            printf("\n");
+          }
         }
       }
       if (!is_first_eqn) {
@@ -506,29 +502,27 @@ static bool iterate(int initial_program_point, bool widening) {
         for (k = 0; k < N_variables; ++k) {
           bool is_fixed = is_same_interval(symbol_table[symbol_table_indices[k]].abstract[i], previous_state ? previous_state->component_states[k] : NULL);
           
-          #ifdef ABSTRACT_DEBUG
-          printf("%s is %s\t", symbol_table[symbol_table_indices[k]].id, is_fixed ? "fixed" : "NOT fixed");
-          #endif
+          if (verbose) printf("%s is %s\t", symbol_table[symbol_table_indices[k]].id, is_fixed ? "fixed" : "NOT fixed");
 
           if (!is_fixed) {
           	if (widening && symbol_table[symbol_table_indices[k]].abstract[i]) {
           		if (!is_less_than_equal_to(previous_state->component_states[k], symbol_table[symbol_table_indices[k]].abstract[i])) {
 
-          			#ifdef ABSTRACT_DEBUG
-          			printf("--\tapplying widening on ::  ");
-          			if (((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->is_empty_interval)
-          				printf("<[], 1> and ");
-          			else
-	          			printf("<[%d,%d], %.8lg> and ", ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->lower,
-	          				((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->upper,
-	          				((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->probability);
-	          		if (previous_state->component_states[k]->is_empty_interval)
-	          			printf("<[], 1>");
-	          		else
-	          			printf("<[%d,%d], %.8lg>", previous_state->component_states[k]->lower, previous_state->component_states[k]->upper,
-	          				previous_state->component_states[k]->probability);
-          			printf(" = ");
-          			#endif
+          			if (verbose) {
+                  printf("--\tapplying widening on ::  ");
+                  if (((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->is_empty_interval)
+          				  printf("<[], 1> and ");
+                  else
+	          			  printf("<[%d,%d], %.8lg> and ", ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->lower,
+                      ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->upper,
+                      ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->probability);
+                  if (previous_state->component_states[k]->is_empty_interval)
+	          			  printf("<[], 1>");
+                  else
+                    printf("<[%d,%d], %.8lg>", previous_state->component_states[k]->lower, previous_state->component_states[k]->upper,
+                      previous_state->component_states[k]->probability);
+                  printf(" = ");
+          			}
 
           			if (((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->is_empty_interval) {
           				free_abstract_state(symbol_table[symbol_table_indices[k]].abstract[i]);
@@ -551,15 +545,15 @@ static bool iterate(int initial_program_point, bool widening) {
             			symbol_table[symbol_table_indices[k]].abstract[i] = state;
           			}
 
-            		#ifdef ABSTRACT_DEBUG
-          			if (((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->is_empty_interval)
-          				printf("<[], 1>");
-          			else
-	          			printf("<[%d,%d], %.8lg>", ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->lower,
-	          				((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->upper,
-	          				((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->probability);
-          			printf("\n");
-          			#endif
+            		if (verbose) {
+                  if (((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->is_empty_interval)
+          				  printf("<[], 1>");
+                  else
+	          			  printf("<[%d,%d], %.8lg>", ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->lower,
+                      ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->upper,
+                      ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->probability);
+                  printf("\n");
+          			}
 
           		}
           		else
@@ -575,19 +569,19 @@ static bool iterate(int initial_program_point, bool widening) {
           program_point_is_fixed &= is_fixed;
         }
 
-        #ifdef ABSTRACT_DEBUG
-        printf("\nG_%d (%s) ::\t", i ? i : N_lines + 1, program_point_is_fixed ? "fixed" : "NOT fixed");
-        for (k = 0; k < N_variables; ++k) {
-          printf("  %s=<[", symbol_table[symbol_table_indices[k]].id);
-          if (((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->is_empty_interval)
-            printf("], 1>");
-          else
-          	printf("%d,%d], %.8lg>", ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->lower,
-              ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->upper,
-              ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->probability);
+        if (verbose) {
+          printf("\nG_%d (%s) ::\t", i ? i : N_lines + 1, program_point_is_fixed ? "fixed" : "NOT fixed");
+          for (k = 0; k < N_variables; ++k) {
+            printf("  %s=<[", symbol_table[symbol_table_indices[k]].id);
+            if (((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->is_empty_interval)
+              printf("], 1>");
+            else
+              printf("%d,%d], %.8lg>", ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->lower,
+                ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->upper,
+                ((AbstractState *) symbol_table[symbol_table_indices[k]].abstract[i])->probability);
+          }
+          printf("\n==============================================================================\n");
         }
-        printf("\n==============================================================================\n");
-        #endif
       }
       has_fixed_point_reached &= program_point_is_fixed;
     }
@@ -598,7 +592,7 @@ static bool iterate(int initial_program_point, bool widening) {
   return has_fixed_point_reached;
 }
 
-void abstract_analysis(bool widening) {
+void abstract_analysis(bool verbose, bool widening) {
 
 	constant_set = insert_into_constant_set(constant_set, MININT);
   constant_set = insert_into_constant_set(constant_set, MAXINT);
@@ -608,15 +602,13 @@ void abstract_analysis(bool widening) {
   do {
     i += 1;
     
-    #ifdef ABSTRACT_DEBUG
-    printf("\t\t\t\titeration-%d", i);
-    #endif
+    if (verbose) printf("\t\t\t\titeration-%d", i);
 
-    is_fixed = iterate(initial_program_point, widening);
+    is_fixed = iterate(verbose, initial_program_point, widening);
   } while(!is_fixed && (widening ? true : i < MAX_ITERATION));
 
   // Narrowing
-  if (widening) iterate(initial_program_point, false);
+  if (widening) iterate(verbose, initial_program_point, false);
 
   is_abstract_solution_fixed = is_fixed;
   N_abstract_iterations = i;
@@ -628,53 +620,53 @@ void abstract_analysis(bool widening) {
   free(data_flow_graph);
 }
 
-void print_abstract_analysis_result() {
+void print_abstract_analysis_result(FILE *stream) {
   int i;
-  if (is_abstract_solution_fixed) printf("Reached fixed point after %d iterations\n\n", N_abstract_iterations);
-  else printf("Fixed point is not reached within %d iterations\n\n", N_abstract_iterations);
+  if (is_abstract_solution_fixed) fprintf(stream, "Reached fixed point after %d iterations\n\n", N_abstract_iterations);
+  else fprintf(stream, "Fixed point is not reached within %d iterations\n\n", N_abstract_iterations);
 
   for (i = 1; i <= N_lines; i++) {
     if (data_flow_matrix[i]) {
-      printf("G_%d  ::  ", i);
+      fprintf(stream, "G_%d  ::  ", i);
       int j;
       for (j = 0; j < N_variables; ++j) {
-        printf("    %s=<[", symbol_table[symbol_table_indices[j]].id);
+        fprintf(stream, "    %s=<[", symbol_table[symbol_table_indices[j]].id);
         if (i == first_abstract_program_point)
-          printf("m,M], 1>");
+          fprintf(stream, "m,M], 1>");
         else if (((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->is_empty_interval)
-          printf("], 1>");
+          fprintf(stream, "], 1>");
         else {
         	char low[40], up[40];
         	sprintf(low, "%d", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->lower);
         	sprintf(up, "%d", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->upper);
-          printf("%s,%s], %.12lg>", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->lower == MININT ? "m" :
+          fprintf(stream, "%s,%s], %.12lg>", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->lower == MININT ? "m" :
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->lower == MAXINT ? "M" : low,
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->upper == MININT ? "m" : 
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->upper == MAXINT ? "M" : up,
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[i])->probability);
         }
       }
-      printf("\n");
+      fprintf(stream, "\n");
     }
   }
   if (data_flow_matrix[0]) {
-    printf("G_%d  ::  ", N_lines + 1);
+    fprintf(stream, "G_%d  ::  ", N_lines + 1);
     int j;
     for (j = 0; j < N_variables; ++j) {
-      printf("    %s=<[", symbol_table[symbol_table_indices[j]].id);
+      fprintf(stream, "    %s=<[", symbol_table[symbol_table_indices[j]].id);
       if (((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->is_empty_interval)
-        printf("], 1>");
+        fprintf(stream, "], 1>");
       else {
       	char low[40], up[40];
         sprintf(low, "%d", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->lower);
         sprintf(up, "%d", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->upper);
-        printf("%s,%s], %.12lg>", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->lower == MININT ? "m" :
+        fprintf(stream, "%s,%s], %.12lg>", ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->lower == MININT ? "m" :
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->lower == MAXINT ? "M" : low,
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->upper == MININT ? "m" : 
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->upper == MAXINT ? "M" : up,
             ((AbstractState *) symbol_table[symbol_table_indices[j]].abstract[0])->probability);
       }
     }
-    printf("\n");
+    fprintf(stream, "\n");
   }
 }

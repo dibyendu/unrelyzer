@@ -1,9 +1,12 @@
 # Exclude files
-code/src/valgrind/
+
+code/src/argparse/*.o
 code/src/dataflow/*.a
 code/src/dataflow/*.o
 code/src/dataflow/*.tab.*
 code/src/dataflow/lex.yy.*
+code/src/domains/*.o
 code/src/*.dot
 code/src/*.png
-code/src/analyzer
+code/src/*.py
+code/src/unrelyzer

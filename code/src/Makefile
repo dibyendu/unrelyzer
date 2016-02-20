@@ -1,11 +1,17 @@
-all: biuldLib build
+all: buildLib buildArgs link
 
-biuldLib:
+buildLib:
 	cd dataflow && make && cd ..
+	cd domains && make && cd ..
 
-build:
-	gcc domains/util.c domains/concrete/concrete.c domains/abstract/abstract.c main.c -o analyzer -Ldataflow -ldf
+buildArgs:
+	cd argparse && make && cd ..
+
+link:
+	gcc argparse/argparse.o domains/util.o domains/concrete.o domains/abstract.o main.c -o unrelyzer -Ldataflow -ldf
 
 clean:
 	cd dataflow && make clean && cd ..
-	rm -f analyzer *.dot *.png
+	cd domains && make clean && cd ..
+	cd argparse && make clean && cd ..
+	rm -f unrelyzer *.dot *.png
