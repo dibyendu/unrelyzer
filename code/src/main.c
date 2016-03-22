@@ -4,28 +4,92 @@
 #include "domains/abstract/abstract.h"
 #include <time.h>
 
-int main(int argc, char **argv) {
+main(int argc, char **argv) {
   Arguments arguments;
 
-  arguments.concrete = arguments.abstract = arguments.widening = arguments.parse_tree = arguments.ast = arguments.cfg = arguments.verbose = 0;
-  arguments.output = NULL;
+  arguments.concrete = arguments.abstract = arguments.widening = arguments.parse_tree =
+  arguments.ast = arguments.cfg = arguments.verbose = arguments.output = 0;
 
   parse_arguments(argc, argv, &arguments);
 
-  FILE *stream = stdout;
-  if (arguments.output) stream = fopen(arguments.output, "w");
+  FILE *stream = arguments.output ? fopen(arguments.output, "w") : stdout;
 
-  parse(arguments.args[0]);
+  if (parse(arguments.input)) exit(EXIT_FAILURE);
 
-  if (arguments.parse_tree) generate_dot_file("parse-tree.dot", PARSE_TREE);
+  char *message;
+  if (has_error(&message, arguments.function, arguments.input, arguments.N_params)) {
+    fprintf(stderr, "%s\n", message);
+    free(message);
+    exit(EXIT_FAILURE);
+  }
+
+
+
+
+  
+
+  prune_and_rehash_symbol_table(arguments.function);
+
+
+
+
+  int i, j;
+
+  
+
+  printf ("Params = ");
+  
+  for(i = 0; i < arguments.N_params; i++)
+    printf ("%s ", arguments.params[i]);
+  printf("\n");
+
+  printf("--------------------- symbol table -------------------------\n");
+  for (i = 0; i < N_variables; ++i) {
+    printf("%s : decl -> ", symbol_table[symbol_table_indices[i]].id);
+    for (j = 0; j < FUNCTION_TABLE_SIZE + 1; ++j)
+      if (symbol_table[symbol_table_indices[i]].decl_scope[j] != -1)
+        printf("%s(%d) ", j == FUNCTION_TABLE_SIZE ? "global" : function_table[j].id, symbol_table[symbol_table_indices[i]].decl_scope[j]);
+    printf("| init -> ");
+    for (j = 0; j < FUNCTION_TABLE_SIZE + 1; ++j)
+      if (symbol_table[symbol_table_indices[i]].init_scope[j] != -1)
+        printf("%s(%d) ", j == FUNCTION_TABLE_SIZE ? "global" : function_table[j].id, symbol_table[symbol_table_indices[i]].init_scope[j]);
+    printf("| use -> ");
+    for (j = 0; j < FUNCTION_TABLE_SIZE + 1; ++j)
+      if (symbol_table[symbol_table_indices[i]].use_scope[j] != -1)
+        printf("%s(%d) ", j == FUNCTION_TABLE_SIZE ? "global" : function_table[j].id, symbol_table[symbol_table_indices[i]].use_scope[j]);
+    printf("\n");
+  }
+
+
+  
+
+
+  if (arguments.parse_tree) generate_dot_file("parse.dot", PARSE_TREE);
   free_parse_tree(parse_tree);
 
-  build_control_flow_graph(cfg, ast);
-
   if (arguments.ast) generate_dot_file("ast.dot", AST);
+
+  
+
+
+
+
+  ast = prune_ast(arguments.function, arguments.params, arguments.N_params, ast);
+
+  generate_dot_file("new_ast.dot", AST);
+  
+
+  
+
+  return;
+
+  //build_control_flow_graph(cfg, ast);
+
   if (arguments.cfg) generate_dot_file("cfg.dot", CFG);
   
-  // data_flow_matrix[N_lines+1][N_lines+1];
+  /*
+   * data_flow_matrix[N_lines+1][N_lines+1];
+   */
   generate_dataflow_equations();  
   print_dataflow_equations(stream);
 
@@ -34,12 +98,12 @@ int main(int argc, char **argv) {
   clock_t concrete_t, abstract_t, start_t;
   if (arguments.concrete)  {
     start_t = clock();
-    concrete_analysis(arguments.verbose);
+    concrete_analysis(arguments.verbose, arguments.N_iteration);
     concrete_t = clock() - start_t;
   }
   if (arguments.abstract)  {
     start_t = clock();
-    abstract_analysis(arguments.verbose, arguments.widening);
+    abstract_analysis(arguments.verbose, arguments.N_iteration, arguments.widening);
     abstract_t = clock() - start_t;
   }
 
@@ -53,8 +117,7 @@ int main(int argc, char **argv) {
   }
 
   free_dataflow_equations();
-
   fclose(stream);
 
-  return 0;
+  exit(EXIT_SUCCESS);
 }

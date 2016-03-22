@@ -8,8 +8,8 @@ unsigned int get_number_of_unique_variables(Ast *node) {
   bool visited[SYMBOL_TABLE_SIZE] = {false};
   int _get_number_of_unique_variables(Ast *node) {
     if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int index = get_symbol_table_index(node->token);
+      if (node->type & IDBLOCK) {
+        int index = symbol_table_entry(node->token);
         if (visited[index]) return 0;
         visited[index] = true;
         return 1;

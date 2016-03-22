@@ -1,33 +1,93 @@
-////////////////    Template Input File    ////////////////
 
-//    1. only SINGLE LINE comment is allowed
-//    2. only WHILE loop with single clause
-//    3. only IF condition with single clause
-//    4. all variables MUST be initialized in the begining
-//    5. length of variable names MUST be atmost 10 characters
-//    6. each statement MUST start in a separate line
 
-///////////////////////////////////////////////////////////
+//////////////////////////    Template Input File    //////////////////////////
+
+//		1. only SINGLE LINE comments are allowed
+//		2. only INT and VOID data types are allowed
+//		3. only WHILE loop and simple IF ELSE conditions are allowed
+//		4. POINTERS, ARRAYS and STRUCTURES are NOT allowed
+//		5. FOR, SWITCH, DO-WHILE and ELSE-IF constructs are NOT allowed
+//		6. BREAK and CONTINUE statements are NOT allowed
+//		7. function calls and return statements are omitted from the analysis
+//		8. all variables used in a function are declared either globally or
+//		   in the begining of the function
+
+///////////////////////////////////////////////////////////////////////////////
+
+int a = 1, b = 10,g=66;
+
+int foo (int foo_int_1, int foo_int_2, int foo_int_3) {
+  int a = -(-(-108)),b =-(-2),c=g;
+
+  if (!(!10)||a&&!b) {
+    a = 5*a;
+    b = a;
+  }
+  return a+2;
+}
+
+void bar (int bar_int_1) {
+  int abcdefghijklmnop=-1;
+  a = abcdefghijklmnop;
+  a = bar(1);
+  a = bar(bar(2));
+
+  while (foo(1,1+6*a, a*a) && a <= 10 && a > 1) {
+    a = 5*a;
+    foo(foo(1,1+6*a, a*a),1+6*a, a*a);
+  }
+  return;
+}
+
+int u=0, v=u;
+int x=v, y=0;
+
+int main(int main_int_1) {
+	int b =x, abcdefghijklmnop = 9, c=8;
+	int p=5, q= p,r = q;
+
+	bar(foo(a, bar(6*7+a), 6));
+
+	x = abcdefghijklmnop; y = b;
+
+	while (main(bar(3&&2))) if (x < 10) x = x + 3;
+	
+	
+
+	return bar(foo(a, 6*7+a, bar(6)));
+}
+
 
 
 /////////////////////    Block - 1    /////////////////////
 
-x = 0;
-while (x<10)
-  x = x + 3;
+// int main() {
+//   int x = 0;
+//
+//   while (x<10)
+//   	x = x + 3;
+//
+//   return 0;
+// }
 
 //////////////////////////////////////////////////////////
 
 /////////////////////    Block - 2    ////////////////////
 
-// x = 10;
 
-// while (x > 1) {
-//   if (x % 2 == 0)
-//     x = x / 2;
-//   else
-//     x = 3 * x + 1;
+// int main(int x) {
+//   x = 10;
+
+//   while (x > 1) {
+//     if (x % 2 == 0)
+//       x = x / 2;
+//     else
+//       x = 3 * x + 1;
+//   }
+
+//   return 0;
 // }
+
 
 //////////////////////////////////////////////////////////
 

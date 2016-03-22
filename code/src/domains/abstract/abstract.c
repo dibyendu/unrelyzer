@@ -49,8 +49,8 @@ static void evaluate_arithmatic(Ast *node, AbstractState *state, int program_poi
 
   void _postfix_traversal(Ast *node) {
     if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int index = get_symbol_table_index(node->token);
+      if (node->type & IDBLOCK) {
+        int index = symbol_table_entry(node->token);
         if (!visited[index])
         	probability *= ((AbstractState *) symbol_table[index].abstract[program_point])->probability /
         		(((AbstractState *) symbol_table[index].abstract[program_point])->upper -
@@ -133,8 +133,8 @@ void evaluate_logical(bool verbose, Ast *node, AbstractState *state, AbstractAll
   void _postfix_traversal(Ast *node, double *probability) {
     int j;
     if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int index = get_symbol_table_index(node->token);
+      if (node->type & IDBLOCK) {
+        int index = symbol_table_entry(node->token);
         for (j = 0; j < N_list; ++j)
           if (list[j].symbol_table_index == index)
             break;
@@ -261,8 +261,8 @@ static void populate_tuples_list(Ast *node, AbstractAllTuple *map, int program_p
 
   void _traverse(Ast *node) {
     if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int idx = get_symbol_table_index(node->token);
+      if (node->type & IDBLOCK) {
+        int idx = symbol_table_entry(node->token);
         if (visited[idx]) return;
         visited[idx] = true;
         map[index].symbol_table_index = idx;
@@ -288,7 +288,7 @@ static void populate_tuples_list(Ast *node, AbstractAllTuple *map, int program_p
 
 static void evaluate_expression(bool verbose, Ast *node, int from_program_point) {
   Ast *evaluation_node = node;
-  if (node->type == ASSIGNBLOCK)
+  if (node->type & ASSIGNBLOCK)
     evaluation_node = node->children[1];
   free_abstract_state(node->value);
   if (!empty_state_status[from_program_point]) {
@@ -302,7 +302,7 @@ static void evaluate_expression(bool verbose, Ast *node, int from_program_point)
   for (i = 0; i < N_variables; ++i) ((AbstractState *) node->value)->component_states[i] = calloc(1, sizeof(AbstractState));
   for (i = N_unique_variables; i; i--) ((AbstractState *) node->value)->probability *= PR_ARITH(PR_RD);
 
-  if (node->type == LOGOPBLOCK) {
+  if (node->type & LOGOPBLOCK) {
     bool is_true = false;
     AbstractAllTuple *tuples = (AbstractAllTuple *) calloc(N_unique_variables, sizeof(AbstractAllTuple));
     populate_tuples_list(evaluation_node, tuples, from_program_point);
@@ -334,7 +334,7 @@ static void evaluate_expression(bool verbose, Ast *node, int from_program_point)
       	((AbstractState *) node->value)->component_states[i]->is_empty_interval = true;
     free(tuples);
   }
-  else if (node->type == ASSIGNBLOCK) {
+  else if (node->type & ASSIGNBLOCK) {
   	evaluate_arithmatic(evaluation_node, (AbstractState *) node->value, from_program_point);
 
   	if (verbose) {
@@ -343,7 +343,7 @@ static void evaluate_expression(bool verbose, Ast *node, int from_program_point)
       printf(".............................................................................\n");
     }
 
-    int i, dest_index = -1, index = get_symbol_table_index(node->children[0]->token);
+    int i, dest_index = -1, index = symbol_table_entry(node->children[0]->token);
     while (dest_index < N_variables && symbol_table_indices[++dest_index] != index);
     for (i = 0; i < N_variables; ++i) {
       if (i != dest_index) {
@@ -463,7 +463,7 @@ static bool iterate(bool verbose, int initial_program_point, bool widening) {
           if (verbose) {
             char stmt[200] = {0};
             printf("G_%d <- G_%d [ %s ] %s\n", i ? i : N_lines + 1, j ? j : N_lines + 1, expression_to_string(data_flow_matrix[i][j], stmt),
-              data_flow_matrix[i][j]->type == LOGOPBLOCK ? "logical" : (data_flow_matrix[i][j]->type == ASSIGNBLOCK ? "assignment" : ""));
+              data_flow_matrix[i][j]->type & LOGOPBLOCK ? "logical" : (data_flow_matrix[i][j]->type & ASSIGNBLOCK ? "assignment" : ""));
           }
 
           if (is_first_eqn) {
@@ -592,7 +592,7 @@ static bool iterate(bool verbose, int initial_program_point, bool widening) {
   return has_fixed_point_reached;
 }
 
-void abstract_analysis(bool verbose, bool widening) {
+void abstract_analysis(bool verbose, unsigned int iteration, bool widening) {
 
 	constant_set = insert_into_constant_set(constant_set, MININT);
   constant_set = insert_into_constant_set(constant_set, MAXINT);
@@ -605,7 +605,7 @@ void abstract_analysis(bool verbose, bool widening) {
     if (verbose) printf("\t\t\t\titeration-%d", i);
 
     is_fixed = iterate(verbose, initial_program_point, widening);
-  } while(!is_fixed && (widening ? true : i < MAX_ITERATION));
+  } while(!is_fixed && (widening ? true : i < iteration));
 
   // Narrowing
   if (widening) iterate(verbose, initial_program_point, false);

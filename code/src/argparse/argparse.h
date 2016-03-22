@@ -2,13 +2,14 @@
 #define ARGPARSE_H
 
 #include <argp.h>
+#include <stdlib.h>
 #include <stdbool.h>
 
 /* Used by main to communicate with parse_opt. */
 typedef struct arguments {
-  char *args[1];
+  char *input, *output, *function, **params;
   bool concrete, abstract, widening, parse_tree, ast, cfg, verbose;
-  char *output;
+  unsigned int N_iteration, N_params;
 } Arguments;
 
 #endif

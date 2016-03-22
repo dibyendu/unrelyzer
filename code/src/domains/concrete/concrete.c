@@ -94,8 +94,8 @@ void evaluate(bool verbose, Ast *node, ConcreteState *state, ConcreteAllTuple *l
   void _postfix_traversal(Ast *node, double *probability, bool visited[]) {
   	int j;
     if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int index = get_symbol_table_index(node->token);
+      if (node->type & IDBLOCK) {
+        int index = symbol_table_entry(node->token);
         if (!visited[index] && !is_logical) *probability *= ((ConcreteState *) symbol_table[index].concrete[program_point])->probability;
         visited[index] = true;
         for (j = 0; j < N_list; ++j)
@@ -223,8 +223,8 @@ static void populate_tuples_list(Ast *node, ConcreteAllTuple *map, int program_p
   }
   void _traverse(Ast *node) {
     if (!node->number_of_children) {
-      if (is_id_block(node)) {
-        int idx = get_symbol_table_index(node->token);
+      if (node->type & IDBLOCK) {
+        int idx = symbol_table_entry(node->token);
         if (visited[idx]) return;
         visited[idx] = true;
         map[index].symbol_table_index = idx;
@@ -252,7 +252,7 @@ static void populate_tuples_list(Ast *node, ConcreteAllTuple *map, int program_p
 
 static void evaluate_expression(bool verbose, Ast *node, int from_program_point) {
   Ast *evaluation_node = node;
-  if (node->type == ASSIGNBLOCK)
+  if (node->type & ASSIGNBLOCK)
     evaluation_node = node->children[1];
   free_concrete_state(node->value);
   if (!empty_state_status[from_program_point]) {
@@ -272,8 +272,8 @@ static void evaluate_expression(bool verbose, Ast *node, int from_program_point)
 
   int dest_index = -1;
   bool is_true = false;
-  if (node->type == ASSIGNBLOCK) {
-    int index = get_symbol_table_index(node->children[0]->token);
+  if (node->type & ASSIGNBLOCK) {
+    int index = symbol_table_entry(node->children[0]->token);
     while (dest_index < N_variables && symbol_table_indices[++dest_index] != index);
     for (i = 0; i < N_variables; ++i)
       if (i != dest_index)
@@ -282,9 +282,9 @@ static void evaluate_expression(bool verbose, Ast *node, int from_program_point)
   }
 
   evaluate(verbose, evaluation_node, (ConcreteState *) node->value, tuples, N_unique_variables, from_program_point,
-    node->type == ASSIGNBLOCK ? false : true, dest_index, &is_true);
+    node->type & ASSIGNBLOCK ? false : true, dest_index, &is_true);
 
-  if (node->type == ASSIGNBLOCK)
+  if (node->type & ASSIGNBLOCK)
   	((ConcreteState *) node->value)->component_states[dest_index]->probability = PR_ARITH(PR_WR) * ((ConcreteState *) node->value)->probability;
   else {
     if (!is_true)  {
@@ -407,7 +407,7 @@ static bool iterate(bool verbose, int initial_program_point) {
           if (verbose) {
             char stmt[200] = {0};
             printf("G_%d <- G_%d [ %s ] %s\n", i ? i : N_lines + 1, j ? j : N_lines + 1, expression_to_string(data_flow_matrix[i][j], stmt),
-              data_flow_matrix[i][j]->type == LOGOPBLOCK ? "logical" : (data_flow_matrix[i][j]->type == ASSIGNBLOCK ? "assignment" : ""));
+              data_flow_matrix[i][j]->type & LOGOPBLOCK ? "logical" : (data_flow_matrix[i][j]->type & ASSIGNBLOCK ? "assignment" : ""));
           }
 
           if (is_first_eqn) {
@@ -476,7 +476,7 @@ static bool iterate(bool verbose, int initial_program_point) {
   return has_fixed_point_reached;
 }
 
-void concrete_analysis(bool verbose) {
+void concrete_analysis(bool verbose, unsigned int iteration) {
   /*
     if (MAXINT ~ MININT) ≈ 20 then the parameter passed to initialize_first_program_point
     MUST be false in order to avoid segmentation fault. And in that case EVERY VARIABLE MUST
@@ -491,7 +491,7 @@ void concrete_analysis(bool verbose) {
     if (verbose) printf("\t\t\t\titeration-%d", i);
 
     is_fixed = iterate(verbose, initial_program_point);
-  } while(!is_fixed && i < MAX_ITERATION);
+  } while(!is_fixed && i < iteration);
 
   is_concrete_solution_fixed = is_fixed;
   N_concrete_iterations = i;

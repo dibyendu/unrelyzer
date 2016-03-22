@@ -1,5 +1,5 @@
 AC_PREREQ(2.69)
-AC_INIT([Control_Flow_Graph], [1.0])
+AC_INIT([unrelyzer], [2.0])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 

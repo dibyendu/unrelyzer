@@ -3,7 +3,7 @@ import subprocess, sys
 concrete, abs_no_wd, abs_wd = [], [], []
 
 for i in xrange(0, 10):
-	proc = subprocess.Popen(["./analyzer", "-c", sys.argv[1]], stdout=subprocess.PIPE)
+	proc = subprocess.Popen(["./unrelyzer", "-c", sys.argv[1]], stdout=subprocess.PIPE)
 	while True:
 		line = proc.stdout.readline()
 		if line != '':
@@ -13,7 +13,7 @@ for i in xrange(0, 10):
 			break
 
 for i in xrange(0, 10):
-	proc = subprocess.Popen(["./analyzer", sys.argv[1]], stdout=subprocess.PIPE)
+	proc = subprocess.Popen(["./unrelyzer", "-a", sys.argv[1]], stdout=subprocess.PIPE)
 	while True:
 		line = proc.stdout.readline()
 		if line != '':
@@ -23,7 +23,7 @@ for i in xrange(0, 10):
 			break
 
 for i in xrange(0, 10):
-	proc = subprocess.Popen(["./analyzer", "-w", sys.argv[1]], stdout=subprocess.PIPE)
+	proc = subprocess.Popen(["./unrelyzer", "-aw", sys.argv[1]], stdout=subprocess.PIPE)
 	while True:
 		line = proc.stdout.readline()
 		if line != '':
@@ -32,8 +32,8 @@ for i in xrange(0, 10):
 		else:
 			break
 
-proc = subprocess.Popen(["./analyzer", "-f", "input"], stdout=subprocess.PIPE)
-subprocess.Popen(["dot", "-Tpng", "cfg.dot", "-o", "cfg.png"], stdout=subprocess.PIPE)
+#proc = subprocess.Popen(["./unrelyzer", "-f", sys.argv[1]], stdout=subprocess.PIPE)
+#subprocess.Popen(["dot", "-Tpng", "cfg.dot", "-o", "cfg.png"], stdout=subprocess.PIPE)
 
 print "\nEach analysis has been performed 10 times and the following results are average of that"
 print "---------------------------------------------------------------------------------------\n"

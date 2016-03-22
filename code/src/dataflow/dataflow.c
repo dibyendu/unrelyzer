@@ -74,6 +74,8 @@ void free_dataflow_equations() {
   free(data_flow_matrix);
   free_ast(ast);
   free_symbol_table();
+  free_function_table();
+  free_constant_set(constant_set);
 }
 
 Ast *invert_expression(Ast *node) {
@@ -144,11 +146,11 @@ char *expression_to_string(Ast *node, char *stmt) {
   if (!node)
     return stmt;
   if (node->number_of_children == 2) {
-    strcat(stmt, node->type == ARITHOPBLOCK ? "(" : "");
+    strcat(stmt, node->type & ARITHOPBLOCK ? "(" : "");
     expression_to_string(node->children[0], stmt);
     strcat(stmt, node->token);
     expression_to_string(node->children[1], stmt);
-    strcat(stmt, node->type == ARITHOPBLOCK ? ")" : "");
+    strcat(stmt, node->type & ARITHOPBLOCK ? ")" : "");
   }
   else if (node->number_of_children == 1) {
     strcat(stmt, node->token);
