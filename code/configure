@@ -1273,8 +1273,7 @@ Fine tuning of the installation directories:
   --infodir=DIR           info documentation [DATAROOTDIR/info]
   --localedir=DIR         locale-dependent data [DATAROOTDIR/locale]
   --mandir=DIR            man documentation [DATAROOTDIR/man]
-  --docdir=DIR            documentation root
-                          [DATAROOTDIR/doc/unrelyzer]
+  --docdir=DIR            documentation root [DATAROOTDIR/doc/unrelyzer]
   --htmldir=DIR           html documentation [DOCDIR]
   --dvidir=DIR            dvi documentation [DOCDIR]
   --pdfdir=DIR            pdf documentation [DOCDIR]
@@ -3433,8 +3432,8 @@ fi
 
 
 FLEX_BINARY="`pwd`/binary/flex"
-FLEX_SOURCE="`pwd`/flex-2.5.39"
 BISON_BINARY="`pwd`/binary/bison"
+FLEX_SOURCE="`pwd`/flex-2.5.39"
 BISON_SOURCE="`pwd`/bison-3.0"
 FLEX=""
 BISON=""
@@ -3550,7 +3549,7 @@ $as_echo "$as_me: building bison from source ..." >&6;}
   BISON="$BISON_BINARY/bin/bison"
 fi
 
-ac_config_files="$ac_config_files src/dataflow/Makefile"
+ac_config_files="$ac_config_files src/parser/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4294,7 +4293,7 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
-    "src/dataflow/Makefile") CONFIG_FILES="$CONFIG_FILES src/dataflow/Makefile" ;;
+    "src/parser/Makefile") CONFIG_FILES="$CONFIG_FILES src/parser/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

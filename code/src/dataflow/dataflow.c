@@ -1,11 +1,11 @@
-#include "parser.h"
+#include "cfg.h"
 
 void generate_dataflow_equations() { 
-  data_flow_matrix = (Ast ***) calloc((N_lines + 1), sizeof(Ast **));
+  data_flow_matrix = (Ast ***) calloc((N_stmts + 1), sizeof(Ast **));
   int i;
-  for (i = 0; i <= N_lines; ++i)
+  for (i = 0; i <= N_stmts; ++i)
     if (cfg_node_bucket[i])
-      data_flow_matrix[i] = (Ast **) calloc((N_lines + 1), sizeof(Ast *));
+      data_flow_matrix[i] = (Ast **) calloc((N_stmts + 1), sizeof(Ast *));
 
   void handle_meet_node(Cfg *node, int index) {
     if (node->in1->program_point != MEET_NODE) {
@@ -27,7 +27,7 @@ void generate_dataflow_equations() {
     return;
   }
 
-  for (i = 0; i <= N_lines; ++i) {
+  for (i = 0; i <= N_stmts; ++i) {
     if (cfg_node_bucket[i]) {
       if (cfg_node_bucket[i]->in1) {
         if (cfg_node_bucket[i]->in1->program_point == MEET_NODE)
@@ -51,7 +51,7 @@ void generate_dataflow_equations() {
       }
     }
   }
-  for (i = 0; i <= N_lines; ++i)
+  for (i = 0; i <= N_stmts; ++i)
     if (cfg_node_bucket[i])
       free(cfg_node_bucket[i]);
   free(cfg_node_bucket);
@@ -60,9 +60,9 @@ void generate_dataflow_equations() {
 
 void free_dataflow_equations() { 
   int i, j;
-  for (i = 0; i <= N_lines; ++i)
+  for (i = 0; i <= N_stmts; ++i)
     if (data_flow_matrix[i]) {
-      for (j = 0; j <= N_lines; ++j)
+      for (j = 0; j <= N_stmts; ++j)
         if (data_flow_matrix[i][j] && data_flow_matrix[i][j]->_is_dataflow_node) {
           if (data_flow_matrix[i][j]->token[0]) free(data_flow_matrix[i][j]->token);
           if (data_flow_matrix[i][j]->children) free(data_flow_matrix[i][j]->children);
@@ -72,6 +72,7 @@ void free_dataflow_equations() {
       free(data_flow_matrix[i]);
     }
   free(data_flow_matrix);
+  free(stmt_line_map);
   free_ast(ast);
   free_symbol_table();
   free_function_table();
@@ -89,11 +90,12 @@ Ast *invert_expression(Ast *node) {
     return;
   }
 
-  void create_false_node(Ast *new, Ast *old) {
-    strcpy(new->token, "!");
-    new->number_of_children = 1;
-    new->children = (Ast **) calloc(1, sizeof(Ast *));
-    new->children[0] = old;
+  void create_false_node(Ast *new_node, Ast *old_node) {
+    strcpy(new_node->token, "!");
+    new_node->operator_type = NOT;
+    new_node->number_of_children = 1;
+    new_node->children = (Ast **) calloc(1, sizeof(Ast *));
+    new_node->children[0] = old_node;
     return; 
   }
 
@@ -104,6 +106,7 @@ Ast *invert_expression(Ast *node) {
     if (node->token[0] == '!') {
       new_node->token = (char *) calloc(strlen(node->children[0]->token) + 1, sizeof(char));
       strcpy(new_node->token, node->children[0]->token);
+      new_node->operator_type = node->children[0]->operator_type;
       new_node->number_of_children = node->children[0]->number_of_children;
       new_node->children = (Ast **) calloc(new_node->number_of_children, sizeof(Ast *));
       copy_children(new_node, node->children[0]);
@@ -116,18 +119,30 @@ Ast *invert_expression(Ast *node) {
   else if (node->number_of_children == 2){
     new_node->token = (char *) calloc(3, sizeof(char));
     new_node->number_of_children = 2;
-    if (!strcmp(node->token, "!="))
+    if (!strcmp(node->token, "!=")) {
       strcpy(new_node->token, "==");
-    else if (!strcmp(node->token, "=="))
+      new_node->operator_type = EQ;
+    }
+    else if (!strcmp(node->token, "==")) {
       strcpy(new_node->token, "!=");
-    else if (!strcmp(node->token, "<="))
+      new_node->operator_type = NEQ;
+    }
+    else if (!strcmp(node->token, "<=")) {
       strcpy(new_node->token, ">");
-    else if (!strcmp(node->token, ">="))
+      new_node->operator_type = GT;
+    }
+    else if (!strcmp(node->token, ">=")) {
       strcpy(new_node->token, "<");
-    else if (!strcmp(node->token, ">"))
+      new_node->operator_type = LT;
+    }
+    else if (!strcmp(node->token, ">")) {
       strcpy(new_node->token, "<=");
-    else if (!strcmp(node->token, "<"))
+      new_node->operator_type = LEQ;
+    }
+    else if (!strcmp(node->token, "<")) {
       strcpy(new_node->token, ">=");
+      new_node->operator_type = GEQ;
+    }
     else {
       create_false_node(new_node, node);
       return new_node;
@@ -164,57 +179,31 @@ char *expression_to_string(Ast *node, char *stmt) {
 }
 
 void print_dataflow_equations(FILE *stream) {
-  void _print_subsscript(int num) {
-    static char *subscript[] = {"₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"};
-    int reverse = 0, digits = 0;
-    while (num) {
-      reverse = reverse * 10 + num % 10;
-      num /= 10;
-      digits += 1;
-    }
-    digits = digits ? digits : 1;
-    while (reverse) {
-      fprintf(stream, "%s", subscript[reverse % 10]);
-      reverse /= 10;
-      digits -= 1;
-    }
-    while (digits) {
-      fprintf(stream, "%s", subscript[0]);
-      digits -= 1;
-    }
-  }
-
-  int i, j, first;
-  char stmt[1024] = {0};
-  for (i = 1; i <= N_lines; i++) {
+  int i, j;
+  bool first, first_equn = true;
+  char stmt[1000] = {0}, subscript[200];
+  for (i = 1; i <= N_stmts; i++) {
     if (data_flow_matrix[i]) {
-      fprintf(stream, "G");
-      _print_subsscript(i);
-      fprintf(stream, " = ");
-      first = 1;
-      for (j = 1; j <= N_lines; j++) {
+      fprintf(stream, "G%s = %s", print_subsscript(i, subscript), first_equn ? " ⊥" : "");
+      first_equn = false;
+      first = true;
+      for (j = 1; j <= N_stmts; j++) {
         if (data_flow_matrix[i][j]) {
           stmt[0] = 0;
-          fprintf(stream, "%ssp(G", first ? " " : " ⊔  ");
-          _print_subsscript(j);
-          fprintf(stream, ", %s)", expression_to_string(data_flow_matrix[i][j], stmt));
-          first = first ? 0 : 0;
+          fprintf(stream, "%ssp(G%s, %s)", first ? " " : " ⊔  ", print_subsscript(j, subscript), expression_to_string(data_flow_matrix[i][j], stmt));
+          first = false;
         }
       }
       fprintf(stream, "\n");
     }
   }
-  first = 1;
-  fprintf(stream, "G");
-  _print_subsscript(N_lines + 1);
-  fprintf(stream, " = ");
-  for (j = 1; j <= N_lines; j++) {
+  first = true;
+  fprintf(stream, "G%s = ", print_subsscript(N_stmts + 1, subscript));
+  for (j = 1; j <= N_stmts; j++) {
     if (data_flow_matrix[0][j]) {
       stmt[0] = 0;
-      fprintf(stream, "%ssp(G", first ? " " : " ⊔  ");
-      _print_subsscript(j);
-      fprintf(stream, ", %s)", expression_to_string(data_flow_matrix[0][j], stmt));
-      first = first ? 0 : 0;
+      fprintf(stream, "%ssp(G%s, %s)", first ? " " : " ⊔  ", print_subsscript(j, subscript), expression_to_string(data_flow_matrix[0][j], stmt));
+      first = false;
     }
   }
   fprintf(stream, "\n");

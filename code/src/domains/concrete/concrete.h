@@ -7,14 +7,16 @@
 #include "../util.h"
 
 typedef struct ConcreteAllTupleT {
-  int symbol_table_index, symbol_table_indices_list_index, current_index, max_values, *values;
+  size_t symbol_table_index, symbol_table_indices_list_index, current_index;
+  unsigned long max_values;
+  var_t *values;
 } ConcreteAllTuple;
 
 typedef struct ConcreteStateT {
-  IntSet *value_set;
-  short number_of_values;
+  IntegerSet *value_set;
+  size_t number_of_values;
   bool is_top_element;
-  double probability;
+  long double probability;
   struct ConcreteStateT **component_states;
 } ConcreteState;
  

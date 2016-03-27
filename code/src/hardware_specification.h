@@ -17,5 +17,7 @@
 #define   PR_GT   1-10E-8
 #define   PR_LT   1-10E-8
 #define   PR_NEG  1-10E-8
+#define   PR_AND  1-10E-8
+#define   PR_OR	  1-10E-8
 
 #endif

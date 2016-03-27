@@ -1,0 +1,15 @@
+include ../Makefile.variables
+
+all: tokenize parse build
+
+tokenize:
+	@FLEX@ tokenizer.l
+
+parse:
+	@BISON@ -d grammar.y
+
+build:
+	$(CC) $(FLAGS) -c *.c
+
+clean:
+	rm -f grammar.tab.* lex.yy.c *.o

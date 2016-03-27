@@ -3,11 +3,12 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include "../limit.h"
 
 typedef struct IntSetT {
-  int value;
+  var_t value;
   struct IntSetT *left, *right; 
-  int _height;
-} IntSet;
+  long _height;
+} IntegerSet;
 
 #endif

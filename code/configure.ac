@@ -4,8 +4,8 @@ AM_INIT_AUTOMAKE
 AC_PROG_CC
 
 FLEX_BINARY="`pwd`/binary/flex"
-FLEX_SOURCE="`pwd`/flex-2.5.39"
 BISON_BINARY="`pwd`/binary/bison"
+FLEX_SOURCE="`pwd`/flex-2.5.39"
 BISON_SOURCE="`pwd`/bison-3.0"
 FLEX=""
 BISON=""
@@ -45,6 +45,6 @@ else
   BISON="$BISON_BINARY/bin/bison"
 fi
 
-AC_OUTPUT([src/dataflow/Makefile])
+AC_OUTPUT([src/parser/Makefile])
 
 rm config.*

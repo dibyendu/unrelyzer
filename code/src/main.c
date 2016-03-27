@@ -1,95 +1,57 @@
 #include "argparse/argparse.h"
-#include "dataflow/parser.h"
+#include "parser/parser.h"
+#include "dataflow/cfg.h"
 #include "domains/concrete/concrete.h"
 #include "domains/abstract/abstract.h"
 #include <time.h>
 
-main(int argc, char **argv) {
+void generate_dot_file(const char *file, GraphT type, void (*traverse)(void *, FILE *)) {
+  FILE *dot_file = fopen(file, "wt");
+  fprintf(dot_file, "digraph %s {\n\n\trankdir=TB;\n\tnode [style=\"filled\"];\n\n",
+    type == PARSE_TREE ? "Parse_Tree" : type == AST ? "Abstract_Syntax_Tree" : "Control_Flow_Graph");
+  if (type == PARSE_TREE)
+    traverse((void *) parse_tree, dot_file);
+  else if (type == AST)
+    traverse((void *) ast, dot_file);
+  else {
+    traverse((void *) cfg, dot_file);
+    free(cfg_node_hash_table);
+  }
+  fprintf(dot_file, "\n}");
+  fclose(dot_file);
+  return;
+}
+
+void main(int argc, char **argv) {
   Arguments arguments;
-
-  arguments.concrete = arguments.abstract = arguments.widening = arguments.parse_tree =
-  arguments.ast = arguments.cfg = arguments.verbose = arguments.output = 0;
-
   parse_arguments(argc, argv, &arguments);
-
   FILE *stream = arguments.output ? fopen(arguments.output, "w") : stdout;
 
   if (parse(arguments.input)) exit(EXIT_FAILURE);
+  else init_cfg_data_structures();
 
   char *message;
-  if (has_error(&message, arguments.function, arguments.input, arguments.N_params)) {
+  if (has_input_error(&message, arguments.function, arguments.input, arguments.params, arguments.N_params)) {
     fprintf(stderr, "%s\n", message);
     free(message);
     exit(EXIT_FAILURE);
   }
 
-
-
-
-  
-
   prune_and_rehash_symbol_table(arguments.function);
 
-
-
-
-  int i, j;
-
-  
-
-  printf ("Params = ");
-  
-  for(i = 0; i < arguments.N_params; i++)
-    printf ("%s ", arguments.params[i]);
-  printf("\n");
-
-  printf("--------------------- symbol table -------------------------\n");
-  for (i = 0; i < N_variables; ++i) {
-    printf("%s : decl -> ", symbol_table[symbol_table_indices[i]].id);
-    for (j = 0; j < FUNCTION_TABLE_SIZE + 1; ++j)
-      if (symbol_table[symbol_table_indices[i]].decl_scope[j] != -1)
-        printf("%s(%d) ", j == FUNCTION_TABLE_SIZE ? "global" : function_table[j].id, symbol_table[symbol_table_indices[i]].decl_scope[j]);
-    printf("| init -> ");
-    for (j = 0; j < FUNCTION_TABLE_SIZE + 1; ++j)
-      if (symbol_table[symbol_table_indices[i]].init_scope[j] != -1)
-        printf("%s(%d) ", j == FUNCTION_TABLE_SIZE ? "global" : function_table[j].id, symbol_table[symbol_table_indices[i]].init_scope[j]);
-    printf("| use -> ");
-    for (j = 0; j < FUNCTION_TABLE_SIZE + 1; ++j)
-      if (symbol_table[symbol_table_indices[i]].use_scope[j] != -1)
-        printf("%s(%d) ", j == FUNCTION_TABLE_SIZE ? "global" : function_table[j].id, symbol_table[symbol_table_indices[i]].use_scope[j]);
-    printf("\n");
-  }
-
-
-  
-
-
-  if (arguments.parse_tree) generate_dot_file("parse.dot", PARSE_TREE);
+  if (arguments.parse_tree) generate_dot_file("parse.dot", PARSE_TREE, traverse_parse_tree);
   free_parse_tree(parse_tree);
+  if (arguments.ast) generate_dot_file("ast.dot", AST, traverse_ast);
 
-  if (arguments.ast) generate_dot_file("ast.dot", AST);
+  ast = prune_ast(arguments.function, arguments.params, arguments.value_params, arguments.interval_params, arguments.N_params, ast);
+  free_arguments(&arguments);
+  if (arguments.ast) generate_dot_file("ast(pruned).dot", AST, traverse_ast);
 
-  
+  build_control_flow_graph(cfg, ast);
 
+  if (arguments.cfg) generate_dot_file("cfg.dot", CFG, traverse_cfg);
+  else free(cfg_node_hash_table);
 
-
-
-  ast = prune_ast(arguments.function, arguments.params, arguments.N_params, ast);
-
-  generate_dot_file("new_ast.dot", AST);
-  
-
-  
-
-  return;
-
-  //build_control_flow_graph(cfg, ast);
-
-  if (arguments.cfg) generate_dot_file("cfg.dot", CFG);
-  
-  /*
-   * data_flow_matrix[N_lines+1][N_lines+1];
-   */
   generate_dataflow_equations();  
   print_dataflow_equations(stream);
 
@@ -109,11 +71,11 @@ main(int argc, char **argv) {
 
   if (arguments.concrete)  {
     fprintf(stream, "---------------------- Result of Concrete Analysis (%ld clock ticks) ----------------------\n", concrete_t);
-    print_concrete_analysis_result(stream);
+    print_concrete_analysis_result(stream, arguments.N_columns);
   }
   if (arguments.abstract) {
   	fprintf(stream, "---------------------- Result of Abstract Analysis (%ld clock ticks) ----------------------\n", abstract_t);
-  	print_abstract_analysis_result(stream);
+  	print_abstract_analysis_result(stream, arguments.N_columns);
   }
 
   free_dataflow_equations();

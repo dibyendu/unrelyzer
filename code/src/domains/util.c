@@ -1,22 +1,22 @@
 #include "util.h"
 
-int limit(int n) {
-  return n > MAXINT ? MAXINT : (n < MININT ? MININT : n);
+var_t limit(var_t n) {
+  return n > MAXINT ? MAXINT : n < MININT ? MININT : n;
 }
 
-unsigned int get_number_of_unique_variables(Ast *node) {
+size_t get_number_of_unique_variables(Ast *node) {
   bool visited[SYMBOL_TABLE_SIZE] = {false};
-  int _get_number_of_unique_variables(Ast *node) {
+  size_t _get_number_of_unique_variables(Ast *node) {
     if (!node->number_of_children) {
       if (node->type & IDBLOCK) {
-        int index = symbol_table_entry(node->token);
+        size_t index = symbol_table_entry(node->token);
         if (visited[index]) return 0;
         visited[index] = true;
         return 1;
       }
       return 0;
     }
-    int i = node->number_of_children, count = 0;
+    size_t i = node->number_of_children, count = 0;
     while (i) count += _get_number_of_unique_variables(node->children[--i]);
     return count;
   }

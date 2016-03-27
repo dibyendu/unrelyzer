@@ -1,11 +1,13 @@
+include ../Makefile.variables
+
 all: buildConcrete buildAbstract
-	gcc -c util.c
+	$(CC) $(FLAGS) -c *.c
 
 buildConcrete:
-	gcc -c concrete/concrete.c
+	$(CC) $(FLAGS) -c concrete/*.c
 
 buildAbstract:
-	gcc -c abstract/abstract.c
+	$(CC) $(FLAGS) -c abstract/*.c
 
 clean:
 	rm -f *.o

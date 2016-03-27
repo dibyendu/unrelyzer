@@ -3,10 +3,19 @@
 code/src/argparse/*.o
 code/src/dataflow/*.a
 code/src/dataflow/*.o
-code/src/dataflow/*.tab.*
-code/src/dataflow/lex.yy.*
 code/src/domains/*.o
+code/src/parser/*.o
+code/src/parser/*.tab.*
+code/src/parser/lex.yy.*
+
+# The following Makefile will be generated in the configure stage
+code/src/parser/Makefile
+
+code/src/*.o
 code/src/*.dot
 code/src/*.png
 code/src/*.py
 code/src/unrelyzer
+Elsevier/*.pdf
+Springer/*.pdf
+Thesis/*.pdf

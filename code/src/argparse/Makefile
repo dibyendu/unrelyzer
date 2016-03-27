@@ -1,7 +1,9 @@
+include ../Makefile.variables
+
 all: build
 
 build:
-	gcc -c argparse.c
+	$(CC) $(FLAGS) -c argparse.c
 
 clean:
 	rm -f *.o

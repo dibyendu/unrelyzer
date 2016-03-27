@@ -5,7 +5,7 @@
 #include <string.h>
 #include "grammar.tab.h"
 
-unsigned int line_number = 0;
+size_t line_number = 0;
 bool is_new_stmt = false;
 
 %}
@@ -54,7 +54,7 @@ IDENTIFIER							[_a-zA-Z][_a-zA-Z0-9]*
 ")"									{ BEGIN(INITIAL); return PCLOSE; }
 "{"									{ is_new_stmt = true; return BOPEN; }
 "}"									{ return BCLOSE; }
-.									{ fprintf(stderr, "found unrecognized character '%s' at line #%d\n", yytext, line_number);
+.									{ fprintf(stderr, "found unrecognized character ‘%s’ at line #%zu\n", yytext, line_number);
 									  exit(EXIT_FAILURE);
 									}
 %%
