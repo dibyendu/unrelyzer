@@ -221,7 +221,7 @@ void evaluate_logical(bool verbose, Ast *node, AbstractState *state, AbstractAll
   int j;
 
   if (verbose) {
-    printf("\n....................... evaluation steps (logical) .......................\n");
+    printf("\n......................... evaluation steps (logical) .........................\n");
     for (j = 0; j < N_list; ++j)
       printf("%s%s, ", j == 0 ? "(" : "", symbol_table[list[j].symbol_table_index].id);
     printf("Result%s  ::  ", j ? ")" : "");
@@ -270,7 +270,7 @@ void evaluate_logical(bool verbose, Ast *node, AbstractState *state, AbstractAll
 
   state->probability *= probability;
 
-  if (verbose) printf("\n..........................................................................\n");
+  if (verbose) printf("\n..............................................................................\n");
 }
 
 static void populate_tuples_list(Ast *node, AbstractAllTuple *map, size_t program_point) {
@@ -357,14 +357,13 @@ static void evaluate_expression(bool verbose, Ast *node, size_t from_program_poi
   	evaluate_arithmatic(evaluation_node, (AbstractState *) node->value, from_program_point);
 
   	if (verbose) {
-      printf("\n....................... evaluation steps (assignment) .......................\n");
+      printf("\n....................... evaluation steps (assignment) ........................\n");
       printf("%s : [%ld,%ld]\n", node->children[0]->token, (long) ((AbstractState *) node->value)->lower, (long) ((AbstractState *) node->value)->upper);
-      printf(".............................................................................\n");
+      printf("..............................................................................\n");
     }
 
-    int dest_index = -1;
-    size_t i, index = symbol_table_entry(node->children[0]->token);
-    while (dest_index < N_variables && symbol_table_indices[++dest_index] != index);
+    size_t i, index = symbol_table_entry(node->children[0]->token), dest_index;
+    for (dest_index = 0; dest_index < N_variables && symbol_table_indices[dest_index] != index; ++dest_index);
     for (i = 0; i < N_variables; ++i) {
       if (i != dest_index) {
       	AbstractState *src = (AbstractState *) symbol_table[symbol_table_indices[i]].abstract[from_program_point];

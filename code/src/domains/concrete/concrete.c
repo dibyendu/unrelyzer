@@ -88,7 +88,7 @@ void copy_state(ConcreteState *src, ConcreteState *dest) {
 }
 
 void evaluate(bool verbose, Ast *node, ConcreteState *state, ConcreteAllTuple *list, size_t N_list, size_t program_point, bool is_logical,
-              int dest_index, bool *is_true) {
+              size_t dest_index, bool *is_true) {
   var_t stack[EVALUATION_STACK_SIZE];
   size_t top = 0;
   long double probability = 1.0;
@@ -178,7 +178,7 @@ void evaluate(bool verbose, Ast *node, ConcreteState *state, ConcreteAllTuple *l
   if (verbose) {
     printf("\n.............................. evaluation steps ..............................\n");
     for (j = 0; j < N_list; ++j)
-  	 printf("%s%s, ", j == 0 ? "(" : "", symbol_table[list[j].symbol_table_index].id);
+      printf("%s%s, ", j == 0 ? "(" : "", symbol_table[list[j].symbol_table_index].id);
     printf("Result%s  ::  ", j ? ")" : "");
   }
   	
@@ -280,11 +280,11 @@ static void evaluate_expression(bool verbose, Ast *node, size_t from_program_poi
   for (i = 0; i < N_variables; ++i)
   	((ConcreteState *) node->value)->component_states[i] = init_concrete_state();
 
-  int dest_index = -1;
+  size_t dest_index;
   bool is_true = false;
   if (node->type & ASSIGNBLOCK) {
     size_t index = symbol_table_entry(node->children[0]->token);
-    while (dest_index < N_variables && symbol_table_indices[++dest_index] != index);
+    for (dest_index = 0; dest_index < N_variables && symbol_table_indices[dest_index] != index; dest_index++);
     for (i = 0; i < N_variables; ++i)
       if (i != dest_index)
         copy_state((ConcreteState *) symbol_table[symbol_table_indices[i]].concrete[from_program_point],
@@ -490,10 +490,10 @@ static bool iterate(bool verbose, size_t initial_program_point) {
 
 void concrete_analysis(bool verbose, size_t iteration) {
   /*
-    if (MAXINT ~ MININT) ≈ 20 then the parameter passed to initialize_first_program_point
-    MUST be false in order to avoid segmentation fault. And in that case EVERY VARIABLE MUST
-    BE INITIALIZED in the begining.
-  */
+   * if (MAXINT ~ MININT) ≈ 20 then the parameter passed to initialize_first_program_point
+   * MUST be false in order to avoid segmentation fault. And in that case EVERY VARIABLE MUST
+   * BE INITIALIZED in the begining.
+   */
   size_t i = 0, initial_program_point = initialize_first_program_point(false);
   bool is_fixed;
   

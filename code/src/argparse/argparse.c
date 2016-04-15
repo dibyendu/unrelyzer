@@ -94,17 +94,17 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
       for (i = 0; i < arguments->N_params; ++i) {
         char *offest = strstr(arguments->params[i], "=");
         if (!offest || !(offest + 1)[0] || strstr(offest + 1, "="))
-          argp_error(state, "Malformed optional argument '%s'", arguments->params[i]);
+          argp_error(state, "Malformed optional argument ‘%s’", arguments->params[i]);
         if ((offest + 1)[0] == '[') {
           has_interval_param = true;
           arguments->interval_params[i] = (long *) calloc(2, sizeof(long));
           if (sscanf(offest + 1, "[%ld,%ld]", &arguments->interval_params[i][0], &arguments->interval_params[i][1]) != 2)
-            argp_error(state, "Malformed optional argument '%s'", arguments->params[i]);
+            argp_error(state, "Malformed optional argument ‘%s’", arguments->params[i]);
         }
         else {
           arguments->value_params[i] = (long *) calloc(1, sizeof(long));
           if (sscanf(offest + 1, "%ld", arguments->value_params[i]) != 1)
-            argp_error(state, "Malformed optional argument '%s'", arguments->params[i]);
+            argp_error(state, "Malformed optional argument ‘%s’", arguments->params[i]);
         }
         *offest = 0;
       }

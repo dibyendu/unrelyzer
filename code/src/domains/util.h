@@ -8,7 +8,7 @@
 
 #define EVALUATION_STACK_SIZE 1000
 
-#define PR_ARITH(p) (p + (1-p)/(MAXINT-MININT+1))
+#define PR_ARITH(p) (p + (1-p)/(var_t) ((var_t) MAXINT - (var_t) MININT + 1))
 #define PR_BOOL(p) (p + (1-p)/2)
 
 #endif
