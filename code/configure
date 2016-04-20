@@ -3434,7 +3434,9 @@ fi
 FLEX_BINARY="`pwd`/binary/flex"
 BISON_BINARY="`pwd`/binary/bison"
 FLEX_SOURCE="`pwd`/flex-2.5.39"
-BISON_SOURCE="`pwd`/bison-3.0"
+BISON_SOURCE="`pwd`/bison-3.0.2"
+FLEX_PREREQ="flex 2.5.35"
+BISON_PREREQ="bison (GNU Bison) 3.0.2"
 FLEX=""
 BISON=""
 
@@ -3466,6 +3468,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_FLEX_CHECK" && ac_cv_prog_FLEX_CHECK="no"
 fi
 fi
 FLEX_CHECK=$ac_cv_prog_FLEX_CHECK
@@ -3478,21 +3481,35 @@ $as_echo "no" >&6; }
 fi
 
 
-if test x"$FLEX_CHECK" == x"yes" ; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: found flex in the system." >&5
-$as_echo "$as_me: found flex in the system." >&6;}
-  FLEX="flex"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: building flex from source ..." >&5
-$as_echo "$as_me: building flex from source ..." >&6;}
-  mkdir -p $FLEX_BINARY
-  tar -xzf $FLEX_SOURCE".tar.gz"
-  pushd $FLEX_SOURCE
-  ./configure --prefix=$FLEX_BINARY
-  make --silent && make --silent install
-  popd
-  rm -rf $FLEX_SOURCE
+if test "$FLEX_CHECK" == "yes"
+then
+  if test ! "`flex -V`" \< "$FLEX_PREREQ"
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: flex exists in the system." >&5
+$as_echo "$as_me: flex exists in the system." >&6;}
+    FLEX="flex"
+  else
+    FLEX_CHECK="no"
+  fi
+fi
+if test "$FLEX_CHECK" == "no"
+then
   FLEX="$FLEX_BINARY/bin/flex"
+  if test \( -x "$FLEX_BINARY/bin/flex" \) -a \( ! "`$FLEX_BINARY/bin/flex -V`" \< "$FLEX_PREREQ" \)
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: precompiled executable exists in \"$FLEX_BINARY\"" >&5
+$as_echo "$as_me: precompiled executable exists in \"$FLEX_BINARY\"" >&6;}
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: minimum requirement is \"$FLEX_PREREQ\" ... building from the source" >&5
+$as_echo "$as_me: minimum requirement is \"$FLEX_PREREQ\" ... building from the source" >&6;}
+    mkdir -p $FLEX_BINARY
+    tar -xzf $FLEX_SOURCE".tar.gz"
+    pushd $FLEX_SOURCE
+    ./configure --prefix=$FLEX_BINARY
+    make --silent && make --silent install
+    popd
+    rm -rf $FLEX_SOURCE
+  fi
 fi
 
 # Extract the first word of "bison", so it can be a program name with args.
@@ -3532,21 +3549,35 @@ $as_echo "no" >&6; }
 fi
 
 
-if test x"$BISON_CHECK" == x"yes" ; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: found bison in the system." >&5
-$as_echo "$as_me: found bison in the system." >&6;}
-  BISON="bison"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: building bison from source ..." >&5
-$as_echo "$as_me: building bison from source ..." >&6;}
-  mkdir -p $BISON_BINARY
-  tar -xzf $BISON_SOURCE".tar.gz"
-  pushd $BISON_SOURCE
-  ./configure --prefix=$BISON_BINARY
-  make --silent && make --silent install
-  popd
-  rm -rf $BISON_SOURCE
+if test "$BISON_CHECK" == "yes"
+then
+  if test ! "`bison -V | head -1`" \< "$BISON_PREREQ"
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: bison exists in the system." >&5
+$as_echo "$as_me: bison exists in the system." >&6;}
+    BISON="bison"
+  else
+    BISON_CHECK="no"
+  fi
+fi
+if test "$BISON_CHECK" == "no"
+then
   BISON="$BISON_BINARY/bin/bison"
+  if test \( -x "$BISON_BINARY/bin/bison" \) -a \( ! "`$BISON_BINARY/bin/bison -V | head -1`" \< "$BISON_PREREQ" \)
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: precompiled executable exists in \"$BISON_BINARY\"" >&5
+$as_echo "$as_me: precompiled executable exists in \"$BISON_BINARY\"" >&6;}
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: minimum requirement is \"$BISON_PREREQ\" ... building from the source" >&5
+$as_echo "$as_me: minimum requirement is \"$BISON_PREREQ\" ... building from the source" >&6;}
+    mkdir -p $BISON_BINARY
+    tar -xzf $BISON_SOURCE".tar.gz"
+    pushd $BISON_SOURCE
+    ./configure --prefix=$BISON_BINARY
+    make --silent && make --silent install
+    popd
+    rm -rf $BISON_SOURCE
+  fi
 fi
 
 ac_config_files="$ac_config_files src/parser/Makefile"

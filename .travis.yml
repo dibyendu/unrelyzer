@@ -1,0 +1,20 @@
+language: c
+install:
+  - pushd code
+  - ./configure
+  - popd
+script:
+  - pushd code
+  - make --environment-overrides
+  - popd
+compiler:
+  - gcc
+cache:
+  directories:
+    - code/binary
+notifications:
+  email:
+    recipients:
+      - dibyendu.das.in@gmail.com
+    on_success: never
+    on_failure: change
