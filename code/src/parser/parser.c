@@ -186,7 +186,7 @@ void build_parse_tree(const char *token, const char *printable, bool is_terminal
  * Similar to parse tree but with
  * all the redundant nodes pruned out.
  */
-void build_abstract_syntax_tree(const char *token, AstType type, OperatorType op, int number_of_children, size_t line, size_t stmt) {
+void build_abstract_syntax_tree(const char *token, AstType type, OperatorType op, size_t number_of_children, size_t line, size_t stmt) {
   Ast *tmp = (Ast *) calloc(1, sizeof(Ast));
   tmp->token = (char *) calloc(strlen(token) + 1, sizeof(char));
   strcpy(tmp->token, token);
@@ -234,12 +234,14 @@ void traverse_parse_tree(void *head, FILE *file) {
 
 void traverse_ast(void *head, FILE *file) {
   void _traverse_ast(Ast *head) {
-    char xlabel[14];
-    sprintf(xlabel, "xlabel=\"%zu(%zu)\"", head->stmt_number, head->line_number);
-    fprintf(file, "\t%ld [label=\"%s\", %s fillcolor=\"#%s\", shape=\"%s\"];\n",
+    char label[100];
+    if (head->stmt_number > 0 && head->line_number > 0)
+      sprintf(label, "<<sup>%zu</sup>%s<sub>%zu</sub>>", head->stmt_number, head->token, head->line_number);
+    else
+      sprintf(label, "\"%s\"", head->token);
+    fprintf(file, "\t%ld [label=%s, fillcolor=\"#%s\", shape=\"%s\"];\n",
       (unsigned long) head,
-      head->token,
-      (head->stmt_number > 0 || head->line_number > 0) ? xlabel : "",
+      label,
       head->type & TRUEBLOCK ? "00FF00" : head->type & FALSEBLOCK ? "FF0000" : head->type & LOGOPBLOCK ? "FA8072" :
         head->type & IDBLOCK ? "FFFF00" : (head->type & NUMBLOCK || head->type & INTERVALBLOCK) ? "00FFFF" : "FFEFD5",
       head->type & FUNCBLOCK ? "box3d" : head->type & ASSIGNBLOCK ? "larrow" : head->type & CALLBLOCK ? "doublecircle" :

@@ -135,6 +135,7 @@ void parse_arguments(int argc, char **argv, Arguments *arguments) {
   arguments->value_params = arguments->interval_params = NULL;
   arguments->N_iteration = 20;
   arguments->N_columns = 1;
+  arguments->N_params = 0;
   argp_parse(&argp, argc, argv, 0, 0, arguments);
 }
 

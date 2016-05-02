@@ -309,9 +309,9 @@ if_stmt				:		IF					{ build_parse_tree("if", NULL, true, 0);
 												  build_abstract_syntax_tree("true\nblock", TRUEBLOCK, 0, ast_stack_top - stmt_count - 2, 0, 0);
 												}
 							else_stmt			{ build_parse_tree("if_stmt", NULL, false, 6);
-												  int cond_block_offset = ast_stack[ast_stack_top - 1]->type & TRUEBLOCK ? 2 : 3,
-												  	  stmt_line_number = ast_stack[ast_stack_top - cond_block_offset]->line_number,
-												  	  stmt_stmt_number = ast_stack[ast_stack_top - cond_block_offset]->stmt_number;
+												  size_t cond_block_offset = ast_stack[ast_stack_top - 1]->type & TRUEBLOCK ? 2 : 3,
+												  		 stmt_line_number = ast_stack[ast_stack_top - cond_block_offset]->line_number,
+												  		 stmt_stmt_number = ast_stack[ast_stack_top - cond_block_offset]->stmt_number;
 												  ast_stack[ast_stack_top - cond_block_offset]->line_number = 0;
 												  ast_stack[ast_stack_top - cond_block_offset]->stmt_number = 0;
 												  ast_stack[ast_stack_top - cond_block_offset]->type |= LOGOPBLOCK;
