@@ -5,7 +5,7 @@ const char *argp_program_bug_address = "<dibyendu.das.in@gmail.com>";
 
 /* Program documentation. */
 static char doc[] = "unrelyzer -- analyzer for unreliable programs,\n\
-that performs static value and interval analysis of any 'C-like' unreliable program.\
+that performs static value and interval analysis of any ‘C-like’ unreliable program.\
 \vThe two required arguments are:\n\
   FILE,\t\t\t\t\twhich is the input source file and\n\
   FUNCTION,\t\t\t\twhich is the function to be analyzed in the input file.\n\
@@ -29,18 +29,18 @@ static char args_doc[] = "FILE FUNCTION [PARAM=VALUE...] [PARAM=[VALUE,VALUE]...
 static struct argp_option options[] = {
   { "concrete",   'c', 0,        0,                   "Analyse the program to produce concrete/discrete values" },
   { "abstract",   'a', 0,        0,                   "Analyse the program to produce abstract (range of) values" },
-  { "parse-tree", 'p', 0,        0,                   "Generate the 'Parse Tree' in a file called 'parse.dot'" },
-  { "ast",        's', 0,        0,                   "Generate the 'Abstract Syntax Tree' in a file called 'ast.dot'" },
-  { "cfg",        'f', 0,        0,                   "Generate the 'Control Flow Graph' in a file called 'cfg.dot'" },
+  { "parse-tree", 'p', 0,        0,                   "Generate the ‘Parse Tree’ in a file called ‘parse.dot’" },
+  { "ast",        's', 0,        0,                   "Generate the ‘Abstract Syntax Tree’ in a file called ‘ast.dot’" },
+  { "cfg",        'f', 0,        0,                   "Generate the ‘Control Flow Graph’ in a file called ‘cfg.dot’" },
   { "verbose",    'v', 0,        0,                   "Produce verbose output" },
   { "debug",      'd', 0,        OPTION_ALIAS },
   { "output",     'o', "FILE",   0,                   "Output to FILE instead of standard output" },
-  { "iteration",  'i', "COUNT",  OPTION_ARG_OPTIONAL, "Iterate through the 'Data Flow Equations' maximum COUNT (default 20) number of \
+  { "iteration",  'i', "COUNT",  OPTION_ARG_OPTIONAL, "Iterate through the ‘Data Flow Equations’ maximum COUNT (default 20) number of \
 times, to reach fixed point"},
   { "column",     'l', "COUNT",  OPTION_ARG_OPTIONAL, "Display output in COUNT (default 1) column(s) of variables"},
   { 0,             0,  0,        0,                   "The following option can only be used along with option -a (or --abstract):" },
-  { "widening",   'w', 0,        0,                   "Use 'widening' technique to accelerate convergence (reduced number of \
-iterations through the Iterate through the Data Flow Equations) of the abstract result" },
+  { "widening",   'w', 0,        0,                   "Use ‘widening’ technique to accelerate convergence (reduced number of \
+iterations through the Data Flow Equations) of the abstract result" },
   { 0 }
 };
 

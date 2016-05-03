@@ -40,7 +40,7 @@ Moreover, one file named `hardware_specification.h` is also there, that specifie
 
 > > The following option can only be used along with option `-a` (or `--abstract`):
 
-> `-w, --widening` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Use **widening** technique to accelerate convergence (reduced number of iterations through the Iterate through the Data Flow Equations) of the abstract result
+> `-w, --widening` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Use **widening** technique to accelerate convergence (reduced number of iterations through the Data Flow Equations) of the abstract result
 
 For example, suppose the following C code is stored in a file named `input`:
 ```c
