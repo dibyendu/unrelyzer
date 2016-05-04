@@ -3440,6 +3440,7 @@ M4_SOURCE="`pwd`/m4-1.4.17"
 FLEX_SOURCE="`pwd`/flex-2.5.39"
 BISON_SOURCE="`pwd`/bison-3.0.2"
 
+M4_PREREQ="m4 (GNU M4) 1.4.17"
 FLEX_PREREQ="flex 2.5.35"
 BISON_PREREQ="bison (GNU Bison) 3.0.2"
 
@@ -3449,6 +3450,8 @@ BISON=""
 
 
 
+
+################# m4 #################
 # Extract the first word of "m4", so it can be a program name with args.
 set dummy m4; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3489,18 +3492,26 @@ fi
 
 if test "$M4_CHECK" == "no"
 then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: m4 was not found in the system ... building from the source" >&5
-$as_echo "$as_me: m4 was not found in the system ... building from the source" >&6;}
-  mkdir -p $M4_BINARY
-  tar -xzf $M4_SOURCE".tar.gz"
-  pushd $M4_SOURCE
-  ./configure --prefix=$M4_BINARY
-  make --silent && make --silent install
-  popd
-  rm -rf $M4_SOURCE
-  export PATH=$PATH:$M4_BINARY/bin/m4
+  if test \( -x "$M4_BINARY/bin/m4" \) -a \( "`$M4_BINARY/bin/m4 --version | head -1`" \== "$M4_PREREQ" \)
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: precompiled executable exists in \"$M4_BINARY\"" >&5
+$as_echo "$as_me: precompiled executable exists in \"$M4_BINARY\"" >&6;}
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: building m4 from the source" >&5
+$as_echo "$as_me: building m4 from the source" >&6;}
+  	mkdir -p $M4_BINARY
+  	tar -xzf $M4_SOURCE".tar.gz"
+  	pushd $M4_SOURCE
+  	./configure --prefix=$M4_BINARY
+  	make --silent && make --silent install
+  	popd
+  	rm -rf $M4_SOURCE
+  fi
+  export PATH=$PATH:$M4_BINARY/bin
 fi
+####################################
 
+################# bison #################
 # Extract the first word of "bison", so it can be a program name with args.
 set dummy bison; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3569,7 +3580,9 @@ $as_echo "$as_me: minimum requirement is \"$BISON_PREREQ\" ... building from the
     rm -rf $BISON_SOURCE
   fi
 fi
+########################################
 
+################# flex #################
 # Extract the first word of "flex", so it can be a program name with args.
 set dummy flex; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3638,6 +3651,7 @@ $as_echo "$as_me: minimum requirement is \"$FLEX_PREREQ\" ... building from the 
     rm -rf $FLEX_SOURCE
   fi
 fi
+########################################
 
 ac_config_files="$ac_config_files src/parser/Makefile"
 
