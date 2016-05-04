@@ -585,8 +585,9 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-BISON_CHECK
 FLEX_CHECK
+BISON_CHECK
+M4_CHECK
 BISON
 FLEX
 am__fastdepCC_FALSE
@@ -3431,17 +3432,143 @@ fi
 
 
 
+M4_BINARY="`pwd`/binary/m4"
 FLEX_BINARY="`pwd`/binary/flex"
 BISON_BINARY="`pwd`/binary/bison"
+
+M4_SOURCE="`pwd`/m4-1.4.17"
 FLEX_SOURCE="`pwd`/flex-2.5.39"
 BISON_SOURCE="`pwd`/bison-3.0.2"
+
 FLEX_PREREQ="flex 2.5.35"
 BISON_PREREQ="bison (GNU Bison) 3.0.2"
+
 FLEX=""
 BISON=""
 
 
 
+
+# Extract the first word of "m4", so it can be a program name with args.
+set dummy m4; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_M4_CHECK+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$M4_CHECK"; then
+  ac_cv_prog_M4_CHECK="$M4_CHECK" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_M4_CHECK="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_M4_CHECK" && ac_cv_prog_M4_CHECK="no"
+fi
+fi
+M4_CHECK=$ac_cv_prog_M4_CHECK
+if test -n "$M4_CHECK"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $M4_CHECK" >&5
+$as_echo "$M4_CHECK" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test "$M4_CHECK" == "no"
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: m4 was not found in the system ... building from the source" >&5
+$as_echo "$as_me: m4 was not found in the system ... building from the source" >&6;}
+  mkdir -p $M4_BINARY
+  tar -xzf $M4_SOURCE".tar.gz"
+  pushd $M4_SOURCE
+  ./configure --prefix=$M4_BINARY
+  make --silent && make --silent install
+  popd
+  rm -rf $M4_SOURCE
+  export PATH=$PATH:$M4_BINARY/bin/m4
+fi
+
+# Extract the first word of "bison", so it can be a program name with args.
+set dummy bison; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_BISON_CHECK+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$BISON_CHECK"; then
+  ac_cv_prog_BISON_CHECK="$BISON_CHECK" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_BISON_CHECK="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_BISON_CHECK" && ac_cv_prog_BISON_CHECK="no"
+fi
+fi
+BISON_CHECK=$ac_cv_prog_BISON_CHECK
+if test -n "$BISON_CHECK"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BISON_CHECK" >&5
+$as_echo "$BISON_CHECK" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test "$BISON_CHECK" == "yes"
+then
+  if test ! "`bison -V | head -1`" \< "$BISON_PREREQ"
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: bison exists in the system." >&5
+$as_echo "$as_me: bison exists in the system." >&6;}
+    BISON="bison"
+  else
+    BISON_CHECK="no"
+  fi
+fi
+if test "$BISON_CHECK" == "no"
+then
+  BISON="$BISON_BINARY/bin/bison"
+  if test \( -x "$BISON_BINARY/bin/bison" \) -a \( ! "`$BISON_BINARY/bin/bison -V | head -1`" \< "$BISON_PREREQ" \)
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: precompiled executable exists in \"$BISON_BINARY\"" >&5
+$as_echo "$as_me: precompiled executable exists in \"$BISON_BINARY\"" >&6;}
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: minimum requirement is \"$BISON_PREREQ\" ... building from the source" >&5
+$as_echo "$as_me: minimum requirement is \"$BISON_PREREQ\" ... building from the source" >&6;}
+    mkdir -p $BISON_BINARY
+    tar -xzf $BISON_SOURCE".tar.gz"
+    pushd $BISON_SOURCE
+    ./configure --prefix=$BISON_BINARY
+    make --silent && make --silent install
+    popd
+    rm -rf $BISON_SOURCE
+  fi
+fi
 
 # Extract the first word of "flex", so it can be a program name with args.
 set dummy flex; ac_word=$2
@@ -3509,74 +3636,6 @@ $as_echo "$as_me: minimum requirement is \"$FLEX_PREREQ\" ... building from the 
     make --silent && make --silent install
     popd
     rm -rf $FLEX_SOURCE
-  fi
-fi
-
-# Extract the first word of "bison", so it can be a program name with args.
-set dummy bison; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_BISON_CHECK+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$BISON_CHECK"; then
-  ac_cv_prog_BISON_CHECK="$BISON_CHECK" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_BISON_CHECK="yes"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-BISON_CHECK=$ac_cv_prog_BISON_CHECK
-if test -n "$BISON_CHECK"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $BISON_CHECK" >&5
-$as_echo "$BISON_CHECK" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-if test "$BISON_CHECK" == "yes"
-then
-  if test ! "`bison -V | head -1`" \< "$BISON_PREREQ"
-  then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: bison exists in the system." >&5
-$as_echo "$as_me: bison exists in the system." >&6;}
-    BISON="bison"
-  else
-    BISON_CHECK="no"
-  fi
-fi
-if test "$BISON_CHECK" == "no"
-then
-  BISON="$BISON_BINARY/bin/bison"
-  if test \( -x "$BISON_BINARY/bin/bison" \) -a \( ! "`$BISON_BINARY/bin/bison -V | head -1`" \< "$BISON_PREREQ" \)
-  then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: precompiled executable exists in \"$BISON_BINARY\"" >&5
-$as_echo "$as_me: precompiled executable exists in \"$BISON_BINARY\"" >&6;}
-  else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: minimum requirement is \"$BISON_PREREQ\" ... building from the source" >&5
-$as_echo "$as_me: minimum requirement is \"$BISON_PREREQ\" ... building from the source" >&6;}
-    mkdir -p $BISON_BINARY
-    tar -xzf $BISON_SOURCE".tar.gz"
-    pushd $BISON_SOURCE
-    ./configure --prefix=$BISON_BINARY
-    make --silent && make --silent install
-    popd
-    rm -rf $BISON_SOURCE
   fi
 fi
 
