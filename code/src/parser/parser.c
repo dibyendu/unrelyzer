@@ -26,13 +26,14 @@ size_t number_hash(unsigned long number, size_t size) {
 }
 
 size_t string_hash(const char *str, size_t size) {
-  unsigned long c, base = 1000;
-  size_t hash = 8642;
-  while (c = *str++) hash = (hash << 5) + hash + (size_t) c;
-  c = 1;
-  while (c <= hash) c *= base;
-  c /= base;
-  return ((size_t) (hash / c) * (size_t) (hash % base)) % size;
+  unsigned long hash = 0, g;
+  while (*str) {
+    hash = (hash << 4) + *(str++);
+    g = hash & 0xF0000000L;
+    if (g) hash ^= g >> 24;
+    hash &= ~g;
+  }
+  return (size_t) (hash % size);
 }
 
 IntegerSet *insert_into_constant_set(IntegerSet *set, long value) {
