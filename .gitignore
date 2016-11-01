@@ -19,6 +19,3 @@ code/src/*.dot
 code/src/*.png
 code/src/*.py
 code/src/unrelyzer
-Elsevier/*.pdf
-Springer/*.pdf
-Thesis/*.pdf

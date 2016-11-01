@@ -1,5 +1,5 @@
 # Unrelyzer <sub><sub>A static analyzer for *C*-like unreliable programs</sub></sub>  &nbsp;&nbsp;&nbsp;&nbsp;  [![Build Status](https://travis-ci.com/dibyendu/unrelyzer.svg?token=Fmprwqf3vgryk9DgxNcZ&branch=master)](https://travis-ci.com/dibyendu/unrelyzer)
-The tool resides in the directory named `code`. It parses any language defined by the [`Mini-C`](http://jamesvanboxtel.com/projects/minic-compiler/minic.pdf#page=2 "Mini-C grammar rules") grammar. Each arithmetic and boolean operation in the program is probabilistic/unreliable. This tool statically analyze the program using **Abstract Interpretation**. As byproduct it also generates **Parse-Tree**, **Abstract-Syntax-Tree** and **Control-Flow-Graph** for the program.
+The tool parses any language defined by the [`Mini-C`](http://jamesvanboxtel.com/projects/minic-compiler/minic.pdf#page=2 "Mini-C grammar rules") grammar. Each arithmetic and boolean operation in the program is probabilistic/unreliable. This tool statically analyze the program using **Abstract Interpretation**. As byproduct it also generates **Parse-Tree**, **Abstract-Syntax-Tree** and **Control-Flow-Graph** for the program.
 
 The type of programs it can analyse are similar to that of `C`. A specimen `input` file is shipped that states all the *necessary constraints* that any program parsable by this tool must follow. It also contains few sample code blocks.
 
@@ -7,14 +7,13 @@ Moreover, one file named `hardware_specification.h` is also there, that specifie
 
 ###Usage
 ####Build
-1. `cd code`
-2. `./configure`
+1. `./configure`
   * This step will check for existing `flex` and `bison` installations in the system. Otherwise compile from the source that is shipped with the project and install in a directory called `binary`.
-3. `make`
+2. `make`
   * Builds the project inside `src` itself.
 
 ####Run
-1.  `cd code/src`
+1.  `cd src`
 2. `./unrelyzer --help`
   * Shows all the options and required arguments to run this tool.
 
