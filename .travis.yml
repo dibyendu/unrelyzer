@@ -1,17 +1,13 @@
 language: c
 install:
-  - pushd code
   - ./configure
-  - popd
 script:
-  - pushd code
   - make --environment-overrides
-  - popd
 compiler:
   - gcc
 cache:
   directories:
-    - code/binary
+    - binary
 notifications:
   email:
     recipients:

@@ -1,21 +1,20 @@
 # Exclude files
 
-code/src/argparse/*.o
-code/src/dataflow/*.a
-code/src/dataflow/*.o
-code/src/domains/*.o
-code/src/parser/*.o
-code/src/parser/*.tab.*
-code/src/parser/lex.yy.*
+src/argparse/*.o
+src/dataflow/*.a
+src/dataflow/*.o
+src/domains/*.o
+src/parser/*.o
+src/parser/*.tab.*
+src/parser/lex.yy.*
 
-# The following Makefile will be generated in the configure stage
-code/src/parser/Makefile
+# The following Makefile will be generated during the configuration stage
+src/parser/Makefile
 
-code/binary/*
-code/binary
+binary
+binary/*
 
-code/src/*.o
-code/src/*.dot
-code/src/*.png
-code/src/*.py
-code/src/unrelyzer
+src/*.o
+src/*.dot
+src/*.png
+src/unrelyzer

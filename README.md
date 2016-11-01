@@ -1,4 +1,4 @@
-# Unrelyzer <sub><sub>A static analyzer for *C*-like unreliable programs</sub></sub>  &nbsp;&nbsp;&nbsp;&nbsp;  [![Build Status](https://travis-ci.com/dibyendu/unrelyzer.svg?token=Fmprwqf3vgryk9DgxNcZ&branch=master)](https://travis-ci.com/dibyendu/unrelyzer)
+# Unrelyzer <sub><sub>A static analyzer for *C*-like unreliable programs</sub></sub>  &nbsp;&nbsp;&nbsp;&nbsp;  [![Build Status](https://travis-ci.org/dibyendu/unrelyzer.svg?branch=master)](https://travis-ci.org/dibyendu/unrelyzer)
 The tool parses any language defined by the [`Mini-C`](http://jamesvanboxtel.com/projects/minic-compiler/minic.pdf#page=2 "Mini-C grammar rules") grammar. Each arithmetic and boolean operation in the program is probabilistic/unreliable. This tool statically analyze the program using **Abstract Interpretation**. As byproduct it also generates **Parse-Tree**, **Abstract-Syntax-Tree** and **Control-Flow-Graph** for the program.
 
 The type of programs it can analyse are similar to that of `C`. A specimen `input` file is shipped that states all the *necessary constraints* that any program parsable by this tool must follow. It also contains few sample code blocks.
