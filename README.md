@@ -5,14 +5,14 @@ The type of programs it can analyse are similar to that of `C`. A specimen `inpu
 
 Moreover, one file named `hardware_specification.h` is also there, that specifies correctness probabilities of the Arithmetic, Logical and Memory operations used in the language. The hardware manufacturer sets these probabilities.
 
-###Usage
-####Build
+### Usage
+#### Build
 1. `./configure`
   * This step will check for existing `flex` and `bison` installations in the system. Otherwise compile from the source that is shipped with the project and install in a directory called `binary`.
 2. `make`
   * Builds the project inside `src` itself.
 
-####Run
+#### Run
 1.  `cd src`
 2. `./unrelyzer --help`
   * Shows all the options and required arguments to run this tool.
@@ -79,17 +79,17 @@ G₇  ::
     limit=<{10}, 0.999999749998>     num=<{12}, 0.999998349988>
 ```
 
-####Visualization of graphs
+#### Visualization of graphs
 1. `dot -Tpng [FILE].dot -o [FILE].png`
   * Converts the graphs from `.dot` format to `.png` image format.
   * [`Graphviz`](http://www.graphviz.org "Graph Visualization Software") is required for this step.
 2. alternatively, an online service like http://graphviz.herokuapp.com, can also be used.
 
-####Clean
+#### Clean
 1. `make clean`
   * To clean up everything.
  
-###Licensing
+### Licensing
 This code is released under  [GNU General Public License (Version 3)](http://www.gnu.org/licenses/gpl-3.0.en.html "GPLv3"), a copy of which is also shipped with the software. ![GPLv3][gpl3]
 
 [gpl3]: http://www.gnu.org/graphics/gplv3-127x51.png  "GPLv3 Logo"
